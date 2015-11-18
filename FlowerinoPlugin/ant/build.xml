@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     @author Cristian Spiescu                                                                
+     ====================================================================== -->
+<project name="project" default="default" basedir="..">
+	<description>
+            description
+    </description>
+
+	<!-- ================================= 
+          target: default              
+         ================================= -->
+	<target name="default" description="Add the class files to jar, and copies it to the Arduino tools folder.">
+		<loadfile property="version" srcfile="src/version.txt"></loadfile>
+		<jar destfile="build/FlowerinoPlugin.jar" basedir="bin">
+			<manifest>
+				<attribute name="Implementation-Version" value="${version}"/>
+			</manifest>
+		</jar>
+		<copy file="build/FlowerinoPlugin.jar" todir="${user.home}/Documents/Arduino/tools/FlowerinoPlugin/tool">
+		</copy>
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir="build" includes="**/*"/>
+		</delete>
+	</target>
+				
+	<target name="zip" description="Builds and creates a ZIP that contains the right dir structure to use when unzipping in ARDUINO_SKETCHBOOK_DIR/tools" depends="default">
+		<zip destfile="build/FlowerinoPlugin.zip">
+			<zipfileset dir="build" includes="FlowerinoPlugin.jar" prefix="FlowerinoPlugin/tool"/>
+		</zip>
+	</target>
+
+</project>
