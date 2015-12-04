@@ -11,7 +11,7 @@
           target: default              
          ================================= -->
 	<target name="default" description="Add the class files to jar, and copies it to the Arduino tools folder.">
-		<loadfile property="version" srcfile="src/version.txt"></loadfile>
+		<loadfile property="version" srcfile="src/flowerino-plugin-version.txt"></loadfile>
 		<jar destfile="build/FlowerinoPlugin.jar" basedir="bin">
 			<manifest>
 				<attribute name="Implementation-Version" value="${version}"/>
@@ -28,7 +28,7 @@
 	</target>
 				
 	<target name="zip" description="Builds and creates a ZIP that contains the right dir structure to use when unzipping in ARDUINO_SKETCHBOOK_DIR/tools" depends="default">
-		<zip destfile="build/FlowerinoPlugin.zip">
+		<zip destfile="build/FlowerinoPlugin_v${version}.zip">
 			<zipfileset dir="build" includes="FlowerinoPlugin.jar" prefix="FlowerinoPlugin/tool"/>
 		</zip>
 	</target>

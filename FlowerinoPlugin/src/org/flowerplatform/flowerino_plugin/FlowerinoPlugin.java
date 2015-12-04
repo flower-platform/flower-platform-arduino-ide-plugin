@@ -58,7 +58,7 @@ public class FlowerinoPlugin implements Tool {
 			}
 				
 			List<Map<String, Object>> generatedFiles = callService("templateGeneratorService/generateFiles?nodeUri=" + resourceNodeUri 
-					+ "&generator=arduino&writeToDisk=false");
+					+ "&generator=arduino&writeToDisk=false", false);
 
 			// write files (with content from JSON)
 			for (Map<String, Object> generatedFile : generatedFiles) {
@@ -138,7 +138,7 @@ public class FlowerinoPlugin implements Tool {
 	public void init(Editor editor) {		
 		// read version from file; we put it in the file to reuse it easily from ANT, when building the .jar file
 		try {
-			BufferedReader r = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("version.txt")));
+			BufferedReader r = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("flowerino-plugin-version.txt")));
 			version = r.readLine();
 			r.close();
 		} catch (IOException e2) {
@@ -159,21 +159,26 @@ public class FlowerinoPlugin implements Tool {
 			public void componentShown(ComponentEvent e) {
 				log("Flowerino Plugin v" + version + " is loading. Using server URL: " + serverUrl);
 
-				// check with version from server
-				Map<String, Object> info = callService("arduinoService/getDesktopAgentInfo");
-				if (info != null) {
-					// may be null if server down; so don't hang here
-					Version serverVersion = VersionHelper.valueOf((String) info.get("version"));
-					if (serverVersion.greaterThan(VersionHelper.valueOf(version))) {
-						if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, "A newer version of Flowerino Plugin is available. It's recommended to update it.\n"
-								+ "Installed version = " + version
-								+ ". Latest version = " + serverVersion
-								+ ".\n\n"
-								+ "Open the web page with download URL and instructions (external web browser)?", "Information", JOptionPane.YES_NO_OPTION)) {
-							navigateUrl(serverUrl + "/servlet/public-resources/org.flowerplatform.arduino/generate/generate.html#/method-plugin");
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						// check with version from server
+						Map<String, Object> info = callService("arduinoService/getDesktopAgentInfo", true);
+						if (info != null) {
+							// may be null if server down; so don't hang here
+							Version serverVersion = VersionHelper.valueOf((String) info.get("version"));
+							if (serverVersion.greaterThan(VersionHelper.valueOf(version))) {
+								if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, "A newer version of Flowerino Plugin is available. It's recommended to update it.\n"
+										+ "Installed version = " + version
+										+ ". Latest version = " + serverVersion
+										+ ".\n\n"
+										+ "Open the web page with download URL and instructions (external web browser)?", "Information", JOptionPane.YES_NO_OPTION)) {
+									navigateUrl((String) info.get("downloadUrl"));
+								}
+							}
 						}
 					}
-				}
+				}).start();
 				
 				// initialize the menu
 				JMenu menu = new JMenu("Flowerino");
@@ -247,7 +252,7 @@ public class FlowerinoPlugin implements Tool {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T callService(String urlWithoutPrefix) {
+	public <T> T callService(String urlWithoutPrefix, boolean failSilently) {
 		URL url = null;
 		BufferedReader in = null;
 		try {
@@ -258,7 +263,9 @@ public class FlowerinoPlugin implements Tool {
 			Map<String, Object> result = (Map<String, Object>) objectMapper.readValue(in, HashMap.class);
 			return (T) result.get("messageResult");
 		} catch (IOException e1) {
-			log("Error while accessing url = " + url, e1);
+			if (!failSilently) {
+				log("Error while accessing url = " + url, e1);
+			}
 			return null;
 		} finally {
 			IOUtils.closeQuietly(in);

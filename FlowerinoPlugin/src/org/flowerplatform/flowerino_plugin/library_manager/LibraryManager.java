@@ -154,7 +154,7 @@ public class LibraryManager extends JDialog {
 		boolean updateNeeded = false;
 		model.getEntries().clear();
 		
-		List<Map<String, Object>> dependentLibraries = flowerinoDesktopAgent.callService("arduinoService/getDependentLibraryDescriptors?resourceNodeUri=" + resourceNodeUri);
+		List<Map<String, Object>> dependentLibraries = flowerinoDesktopAgent.callService("arduinoService/getDependentLibraryDescriptors?resourceNodeUri=" + resourceNodeUri, false);
 		
 		// index all the required libs by header file
 		Map<String, Map<String, Object>> lookup = new HashMap<>();
