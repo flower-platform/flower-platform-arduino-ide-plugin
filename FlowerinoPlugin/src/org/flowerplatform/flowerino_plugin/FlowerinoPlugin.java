@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -33,6 +34,9 @@ import javax.swing.JOptionPane;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
+import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
+import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
+import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
 
 import processing.app.BaseNoGui;
 import processing.app.Editor;
@@ -58,7 +62,7 @@ public class FlowerinoPlugin implements Tool {
 			}
 				
 			List<Map<String, Object>> generatedFiles = callService("templateGeneratorService/generateFiles?nodeUri=" + resourceNodeUri 
-					+ "&generator=arduino&writeToDisk=false", false);
+					+ "&generator=arduino-full&writeToDisk=false", false);
 
 			// write files (with content from JSON)
 			for (Map<String, Object> generatedFile : generatedFiles) {
@@ -119,6 +123,8 @@ public class FlowerinoPlugin implements Tool {
 			lm.setVisible(true);
 		}
 	}
+
+	public static AbstractLibraryInstallerWrapper libraryInstallerWrapper;
 	
 	protected Editor editor;
 	protected String serverUrl;
@@ -158,7 +164,7 @@ public class FlowerinoPlugin implements Tool {
 			@Override
 			public void componentShown(ComponentEvent e) {
 				log("Flowerino Plugin v" + version + " is loading. Using server URL: " + serverUrl);
-
+				initLegacySupport();
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -222,6 +228,28 @@ public class FlowerinoPlugin implements Tool {
 			@Override
 			public void componentHidden(ComponentEvent e) {}
 		});
+	}
+	
+	protected void initLegacySupport() {
+		String currentVersionStr = "0.0.0";
+		try {
+			// we use reflection, because otherwise the compile time version would be "stamped" into the jar
+			Field versionName = BaseNoGui.class.getField("VERSION_NAME");
+			currentVersionStr = (String) versionName.get(null);
+		} catch (NoSuchFieldException | SecurityException
+				| IllegalArgumentException | IllegalAccessException e) {
+			log("Error getting the Arduino IDE version", e);
+		}
+		Version currentVersion = VersionHelper.valueOf(currentVersionStr);
+		Version v165 = VersionHelper.valueOf("1.6.5");
+		if (currentVersion.lessThan(v165)) {
+			log("WARNING! Your Arduino IDE v" + currentVersion + " is too old. Flowerino Plugin "
+					+ "has been tested with Arduino IDE starting with v" + v165 + ". Unexpected errors may appear.");
+		} else if (currentVersion.lessThan(VersionHelper.valueOf("1.6.6"))) {
+			libraryInstallerWrapper = new LibraryInstallerWrapperPre166();
+		} else {
+			libraryInstallerWrapper = new LibraryInstallerWrapper();
+		}
 	}
 	
 	public void navigateUrl(String url) {

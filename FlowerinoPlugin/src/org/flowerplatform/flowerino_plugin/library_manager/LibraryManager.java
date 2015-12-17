@@ -3,7 +3,6 @@ package org.flowerplatform.flowerino_plugin.library_manager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,9 +33,7 @@ import org.flowerplatform.flowerino_plugin.library_manager.renderer.StatusCellRe
 
 import processing.app.Base;
 import processing.app.packages.UserLibrary;
-import cc.arduino.contributions.ConsoleProgressListener;
 import cc.arduino.contributions.VersionHelper;
-import cc.arduino.contributions.libraries.LibraryInstaller;
 
 import com.github.zafarkhaja.semver.Version;
 
@@ -304,10 +301,6 @@ public class LibraryManager extends JDialog {
 		close();
 		
 		try {
-			Field libraryInstallerField = Base.class.getDeclaredField("libraryInstaller");
-			libraryInstallerField.setAccessible(true);
-			LibraryInstaller installer = (LibraryInstaller) libraryInstallerField.get(Base.INSTANCE);
-			
 			for (LibraryManagerEntry entry : model.getEntries()) {
 				FlowerinoPlugin.log("For required library: " + entry.getName() + ", applying action: " + entry.getAction());
 				switch (entry.getAction()) {
@@ -315,11 +308,11 @@ public class LibraryManager extends JDialog {
 					if (entry.getExistingLibrary() == null) {
 						break;
 					}
-					installer.remove(entry.getExistingLibrary(), new ConsoleProgressListener());
+					FlowerinoPlugin.libraryInstallerWrapper.remove(entry.getExistingLibrary());
 					break;
 				case DOWNLOAD:
 					RequiredLibraryWrapper requiredLibrary = new RequiredLibraryWrapper(entry.getRequiredLibrary());
-					installer.install(requiredLibrary, entry.getExistingLibrary(), new ConsoleProgressListener());
+					FlowerinoPlugin.libraryInstallerWrapper.install(requiredLibrary, entry.getExistingLibrary());
 					break;
 				}
 			}
