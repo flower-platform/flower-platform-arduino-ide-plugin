@@ -38,14 +38,14 @@ import org.flowerplatform.flowerino_plugin.library_manager.compatibility.Abstrac
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.zafarkhaja.semver.Version;
+
+import cc.arduino.contributions.VersionHelper;
 import processing.app.BaseNoGui;
 import processing.app.Editor;
 import processing.app.Sketch;
 import processing.app.tools.Tool;
-import cc.arduino.contributions.VersionHelper;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.zafarkhaja.semver.Version;
 
 /**
  * @author Cristian Spiescu
@@ -153,8 +153,16 @@ public class FlowerinoPlugin implements Tool {
 		
 		// get/create global properties
 		Properties globalProperties = readProperties(getGlobalPropertiesFile());
-		if (globalProperties.isEmpty()) {
+		boolean writeProperties = false;
+		if (globalProperties.getProperty("serverUrl") == null) {
 			globalProperties.put("serverUrl", "http://hub.flower-platform.com");
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("serverPort") == null) {
+			globalProperties.put("serverPort", "80");
+			writeProperties = true;
+		}
+		if (writeProperties) {
 			writeProperties(globalProperties, getGlobalPropertiesFile());
 		}
 		serverUrl = globalProperties.getProperty("serverUrl");
