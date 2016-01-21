@@ -29,16 +29,19 @@ public class ClientHandler implements Runnable {
 			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			OutputStream out = socket.getOutputStream();
 			String request = in.readLine();
+			System.out.println(request);
+			String method = request.substring(0, request.indexOf(' '));
+			if (!method.equals("POST")) {
+				throw new RuntimeException(String.format("Unsupported method: %s", method));
+			}
 			int contentLength = 0;
 			String s;
 			while ((s = in.readLine()).length() > 0) {
+//				System.out.println(s);
 				if (s.startsWith("Content-Length")) {
 					contentLength = Integer.parseInt(s.substring(s.indexOf(' ') + 1));
 				}
 			}
-			
-//			System.out.println(request);
-
 			String command = request.substring(request.indexOf('/') + 1,  request.lastIndexOf(' '));
 			StringBuilder sb = new StringBuilder();
 			char[] buf = new char[256];

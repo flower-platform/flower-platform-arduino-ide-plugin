@@ -1,6 +1,7 @@
 package org.flowerplatform.flowerino_plugin.server;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class HttpServer implements Runnable {
 	
 	public HttpServer(int port) throws IOException {
 		threadPool = Executors.newFixedThreadPool(2);
-		serverSocket = new ServerSocket(port);
+		serverSocket = new ServerSocket(port, 0, InetAddress.getLoopbackAddress());
 		
 		commands = new HashMap<>();
 		commands.put("updateSourceFiles", UpdateSourceFilesCommand.class);
