@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -33,10 +34,12 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.flowerplatform.flowerino.otaupload.OtaUpload;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
+import org.flowerplatform.flowerino_plugin.server.HttpServer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zafarkhaja.semver.Version;
@@ -45,6 +48,7 @@ import cc.arduino.contributions.VersionHelper;
 import processing.app.BaseNoGui;
 import processing.app.Editor;
 import processing.app.Sketch;
+import processing.app.SketchData;
 import processing.app.tools.Tool;
 
 /**
@@ -125,7 +129,9 @@ public class FlowerinoPlugin implements Tool {
 	}
 
 	public static AbstractLibraryInstallerWrapper libraryInstallerWrapper;
-	
+
+	private static FlowerinoPlugin INSTANCE;
+
 	protected Editor editor;
 	protected String serverUrl;
 	protected final static String SERVICE_PREFIX = "/ws-dispatcher";
@@ -141,7 +147,11 @@ public class FlowerinoPlugin implements Tool {
 	}
 
 	@Override
-	public void init(Editor editor) {		
+	public void init(Editor editor) {
+		// getInstance() always returns first instance created
+		if (INSTANCE == null) {
+			INSTANCE = this;
+		}
 		// read version from file; we put it in the file to reuse it easily from ANT, when building the .jar file
 		try {
 			BufferedReader r = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("flowerino-plugin-version.txt")));
@@ -159,14 +169,21 @@ public class FlowerinoPlugin implements Tool {
 			writeProperties = true;
 		}
 		if (globalProperties.getProperty("serverPort") == null) {
-			globalProperties.put("serverPort", "80");
+			globalProperties.put("serverPort", "9000");
 			writeProperties = true;
 		}
 		if (writeProperties) {
 			writeProperties(globalProperties, getGlobalPropertiesFile());
 		}
 		serverUrl = globalProperties.getProperty("serverUrl");
-
+		
+		int serverPort = Integer.parseInt(globalProperties.getProperty("serverPort"));
+		try {
+			new HttpServer(serverPort);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		this.editor = editor;
 		editor.addComponentListener(new ComponentListener() {
 			@Override
@@ -225,6 +242,9 @@ public class FlowerinoPlugin implements Tool {
 				menu.add(new JMenuItem("Go to Flowerino > Browse Repositories (external web browser)")).addActionListener(e1 -> navigateUrl(serverUrl));
 				menu.add(new JMenuItem("Go to Flowerino Web Site (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com/flowerino"));
 				
+				// add Zero OTA Upload menu item
+				menu.add(new JMenuItem("Zero OTA Upload")).addActionListener(e1 -> zeroOtaUpload());
+
 				editor.getJMenuBar().add(menu, editor.getJMenuBar().getComponentCount() - 1);
 				editor.getJMenuBar().revalidate();
 			}
@@ -266,6 +286,33 @@ public class FlowerinoPlugin implements Tool {
 		} catch (IOException | URISyntaxException e1) {
 			log("Cannot open url: " + serverUrl);
 		}		
+	}
+	
+	/**
+	 * @author Claudiu Matei
+	 */
+	public void zeroOtaUpload() {
+		Runnable uploadTask = () -> {
+			try {
+				editor.statusNotice("Compiling...");
+				String fileName = editor.getSketch().build(false, true);
+				String filePath = getBuildFolder(editor.getSketch()) + File.separator + fileName + ".bin";
+
+				String ip = JOptionPane.showInputDialog("Enter IP address:");
+				Pattern ipPattern = Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");		
+				if (!ipPattern.matcher(ip).matches()) {
+					JOptionPane.showMessageDialog(null, "Invalid IP address!");
+					return;
+				}
+				
+				editor.statusNotice("Uploading OTA...");
+				new OtaUpload(ip, 65500, filePath).start();
+				editor.statusNotice("Done.");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		};
+		new Thread(uploadTask).start();
 	}
 	
 	@Override
@@ -378,6 +425,29 @@ public class FlowerinoPlugin implements Tool {
 
 		writeProperties(properties, getProjectPropertiesFile());
 		return result;
+	}
+
+	public static File getBuildFolder(Sketch sketch) throws IOException {
+		SketchData sketchData = null;
+		try {
+			Field f;
+			f = sketch.getClass().getDeclaredField("data");
+			f.setAccessible(true);
+			sketchData = (SketchData) f.get(sketch); 
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		} 
+		return BaseNoGui.getBuildFolder(sketchData);
+	}
+
+	public static File getFlowerPlatformWorkFolder() {
+		File f = new File("F:\\flower-platform-work");
+		f.mkdirs();
+		return f;
+	}
+	
+	public static FlowerinoPlugin getInstance() {
+		return INSTANCE;
 	}
 	
 }
