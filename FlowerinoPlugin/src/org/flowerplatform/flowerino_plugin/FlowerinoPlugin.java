@@ -35,11 +35,15 @@ import javax.swing.JOptionPane;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowerplatform.flowerino.otaupload.OtaUpload;
+import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
+import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
+import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
+import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesCommand;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
-import org.flowerplatform.flowerino_plugin.server.HttpServer;
+import org.flowerplatform.tiny_http_server.HttpServer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zafarkhaja.semver.Version;
@@ -179,7 +183,11 @@ public class FlowerinoPlugin implements Tool {
 		
 		int serverPort = Integer.parseInt(globalProperties.getProperty("serverPort"));
 		try {
-			new HttpServer(serverPort);
+			HttpServer server = new HttpServer(serverPort);
+			server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+			server.registerCommand("getBoards", GetBoardsCommand.class);
+			server.registerCommand("selectBoard", SelectBoardCommand.class);
+			server.registerCommand("setOptions", SetOptionsCommand.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -451,3 +459,4 @@ public class FlowerinoPlugin implements Tool {
 	}
 	
 }
+ 

@@ -1,4 +1,4 @@
-package org.flowerplatform.flowerino_plugin.server.command;
+package org.flowerplatform.flowerino_plugin.command;
 
 import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
 import org.flowerplatform.flowerino_plugin.SourceFileDto;
-import org.flowerplatform.flowerino_plugin.server.IHttpCommand;
+import org.flowerplatform.tiny_http_server.IHttpCommand;
 
 import processing.app.BaseNoGui;
 import processing.app.Editor;

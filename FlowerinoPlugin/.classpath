@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/arduino-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/processing"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tiny-http-server"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

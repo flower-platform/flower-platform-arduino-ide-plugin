@@ -13,6 +13,7 @@
 	<target name="default" description="Add the class files to jar, and copies it to the Arduino tools folder.">
 		<loadfile property="version" srcfile="src/flowerino-plugin-version.txt"></loadfile>
 		<jar destfile="build/FlowerinoPlugin.jar" basedir="bin">
+			<fileset dir="../../tiny-http-server/tiny-http-server/bin" />
 			<manifest>
 				<attribute name="Implementation-Version" value="${version}"/>
 			</manifest>

@@ -31,12 +31,26 @@ public class OtaUpload {
 		DatagramSocket sock = new DatagramSocket();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write("OTAUPLOAD".getBytes());
-        baos.write(("" + serverSocket.getLocalPort()).getBytes());
+
+        int localPort = serverSocket.getLocalPort();
+        baos.write((localPort & 0xFF00) >> 8);
+        baos.write(localPort & 0xFF);
+        
+        baos.write((binData.length & 0xFF000000) >> 24);
+        baos.write((binData.length & 0xFF0000) >> 16);
+        baos.write((binData.length & 0xFF00) >> 8);
+        baos.write(binData.length & 0xFF);
+        
+        // compute check sequence
+//        for (int i = 0; i < binData.length; i++) {
+//        	
+//        }
+        
         byte[] packetData = baos.toByteArray();
-        sock.send(new DatagramPacket(packetData, packetData.length, new InetSocketAddress(ip, port)));
         sock.send(new DatagramPacket(packetData, packetData.length, new InetSocketAddress(ip, port)));
         try { Thread.sleep(100); } catch (Exception e) { e.printStackTrace(); }
         sock.send(new DatagramPacket(packetData, packetData.length, new InetSocketAddress(ip, port)));
+        try { Thread.sleep(100); } catch (Exception e) { e.printStackTrace(); }
         sock.send(new DatagramPacket(packetData, packetData.length, new InetSocketAddress(ip, port)));
         sock.close();
         
