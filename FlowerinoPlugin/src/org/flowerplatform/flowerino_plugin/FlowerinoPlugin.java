@@ -20,13 +20,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -34,7 +36,7 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.flowerplatform.flowerino.otaupload.OtaUpload;
+import org.flowerplatform.flowerino.otaupload.OtaUploadDialog;
 import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
 import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
 import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
@@ -141,7 +143,12 @@ public class FlowerinoPlugin implements Tool {
 	protected final static String SERVICE_PREFIX = "/ws-dispatcher";
 	protected Set<String> libraryVersionCheckedOnce = new HashSet<>();
 	protected String version;
+	protected Properties globalProperties; 
 	
+	public Properties getGlobalProperties() {
+		return globalProperties;
+	}
+
 	public Editor getEditor() {
 		return editor;
 	}
@@ -166,14 +173,26 @@ public class FlowerinoPlugin implements Tool {
 		}
 		
 		// get/create global properties
-		Properties globalProperties = readProperties(getGlobalPropertiesFile());
+		globalProperties = readProperties(getGlobalPropertiesFile());
 		boolean writeProperties = false;
 		if (globalProperties.getProperty("serverUrl") == null) {
 			globalProperties.put("serverUrl", "http://hub.flower-platform.com");
 			writeProperties = true;
 		}
-		if (globalProperties.getProperty("serverPort") == null) {
-			globalProperties.put("serverPort", "9000");
+		if (globalProperties.getProperty("commandServerPort") == null) {
+			globalProperties.put("commandServerPort", "9000");
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("otaUpload.serverSignature") == null) {
+			try {
+				globalProperties.put("otaUpload.serverSignature", new String(Base64.getEncoder().encode(SecureRandom.getInstanceStrong().generateSeed(32))));
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("otaUpload.method") == null) {
+			globalProperties.put("otaUpload.method", "0");
 			writeProperties = true;
 		}
 		if (writeProperties) {
@@ -181,8 +200,8 @@ public class FlowerinoPlugin implements Tool {
 		}
 		serverUrl = globalProperties.getProperty("serverUrl");
 		
-		int serverPort = Integer.parseInt(globalProperties.getProperty("serverPort"));
 		try {
+			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
 			HttpServer server = new HttpServer(serverPort);
 			server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
 			server.registerCommand("getBoards", GetBoardsCommand.class);
@@ -191,7 +210,7 @@ public class FlowerinoPlugin implements Tool {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		this.editor = editor;
 		editor.addComponentListener(new ComponentListener() {
 			@Override
@@ -251,7 +270,7 @@ public class FlowerinoPlugin implements Tool {
 				menu.add(new JMenuItem("Go to Flowerino Web Site (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com/flowerino"));
 				
 				// add Zero OTA Upload menu item
-				menu.add(new JMenuItem("Zero OTA Upload")).addActionListener(e1 -> zeroOtaUpload());
+				menu.add(new JMenuItem("Upload OTA - MKR1000 / Zero")).addActionListener(e1 -> zeroOtaUpload());
 
 				editor.getJMenuBar().add(menu, editor.getJMenuBar().getComponentCount() - 1);
 				editor.getJMenuBar().revalidate();
@@ -300,27 +319,10 @@ public class FlowerinoPlugin implements Tool {
 	 * @author Claudiu Matei
 	 */
 	public void zeroOtaUpload() {
-		Runnable uploadTask = () -> {
-			try {
-				editor.statusNotice("Compiling...");
-				String fileName = editor.getSketch().build(false, true);
-				String filePath = getBuildFolder(editor.getSketch()) + File.separator + fileName + ".bin";
-
-				String ip = JOptionPane.showInputDialog("Enter IP address:");
-				Pattern ipPattern = Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");		
-				if (!ipPattern.matcher(ip).matches()) {
-					JOptionPane.showMessageDialog(null, "Invalid IP address!");
-					return;
-				}
-				
-				editor.statusNotice("Uploading OTA...");
-				new OtaUpload(ip, 65500, filePath).start();
-				editor.statusNotice("Done.");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		};
-		new Thread(uploadTask).start();
+		OtaUploadDialog dialog = new OtaUploadDialog();
+		Integer method = Integer.parseInt(globalProperties.getProperty("otaUpload.method"));
+		dialog.setMethod(method);
+		dialog.setVisible(true);
 	}
 	
 	@Override
@@ -408,6 +410,10 @@ public class FlowerinoPlugin implements Tool {
 			}
 		}
 		log("Config info successfully saved in " + file.getAbsolutePath());
+	}
+	
+	public void writeGlobalProperties() {
+		writeProperties(globalProperties, getGlobalPropertiesFile());
 	}
 	
 	public String getResourceNodeUri(String fullRepository) {
