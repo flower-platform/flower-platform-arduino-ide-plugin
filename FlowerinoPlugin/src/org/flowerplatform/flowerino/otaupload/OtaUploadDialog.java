@@ -10,6 +10,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
@@ -28,7 +30,13 @@ import javax.swing.border.TitledBorder;
 import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
 
 import processing.app.Editor;
+import processing.app.SerialMonitor;
 
+/**
+ * 
+ * @author Claudiu Matei
+ *
+ */
 public class OtaUploadDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
@@ -46,9 +54,12 @@ public class OtaUploadDialog extends JDialog {
 	private JPanel pParamsLan;
 	private JRadioButton rdbtnLanDispatcher;
 	private JRadioButton rdbtnLanNonSecure;
+	private JRadioButton rdbtnInternet;
 
 	private int method = -1;
-	
+	private JTextField tAzureConnectionString;
+	private JLabel lblDeviceId;
+	private JTextField tDeviceId;
 	
 	/**
 	 * Launch the application.
@@ -68,8 +79,9 @@ public class OtaUploadDialog extends JDialog {
 	 * Create the dialog.
 	 */
 	public OtaUploadDialog() {
+		setModal(true);
 		setTitle("Upload OTA - MKR1000 / Zero");
-		setBounds(100, 100, 479, 312);
+		setBounds(100, 100, 479, 367);
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		contentPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -101,6 +113,16 @@ public class OtaUploadDialog extends JDialog {
 				buttonGroup.add(rdbtnLanDispatcher);
 				panel.add(rdbtnLanDispatcher);
 			}
+			{
+				rdbtnInternet = new JRadioButton("Internet via Azure IoT Hub + secure via dispatcher");
+				rdbtnInternet.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						setMethod(METHOD_INTERNET);
+					}
+				});
+				buttonGroup.add(rdbtnInternet);
+				panel.add(rdbtnInternet);
+			}
 		}
 		{
 			pParamsLan = new JPanel();
@@ -109,9 +131,9 @@ public class OtaUploadDialog extends JDialog {
 			contentPanel.add(pParamsLan);
 			GridBagLayout gbl_pParamsLan = new GridBagLayout();
 			gbl_pParamsLan.columnWidths = new int[]{156, 156, 0};
-			gbl_pParamsLan.rowHeights = new int[]{20, 20, 20, 20, 0};
+			gbl_pParamsLan.rowHeights = new int[]{20, 20, 20, 20, 0, 0, 0, 0};
 			gbl_pParamsLan.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-			gbl_pParamsLan.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+			gbl_pParamsLan.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 			pParamsLan.setLayout(gbl_pParamsLan);
 			{
 				JLabel lblServerSignature = new JLabel("Server signature");
@@ -176,13 +198,14 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tDispatcherUrl.gridy = 2;
 				pParamsLan.add(tDispatcherUrl, gbc_tDispatcherUrl);
 				tDispatcherUrl.setColumns(10);
+				tDispatcherUrl.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUrl"));
 			}
 			{
 				JLabel lblDispatcherUploadKey = new JLabel("Dispatcher upload key");
 				GridBagConstraints gbc_lblDispatcherUploadKey = new GridBagConstraints();
 				gbc_lblDispatcherUploadKey.anchor = GridBagConstraints.WEST;
 				gbc_lblDispatcherUploadKey.fill = GridBagConstraints.VERTICAL;
-				gbc_lblDispatcherUploadKey.insets = new Insets(0, 0, 0, 5);
+				gbc_lblDispatcherUploadKey.insets = new Insets(0, 0, 5, 5);
 				gbc_lblDispatcherUploadKey.gridx = 0;
 				gbc_lblDispatcherUploadKey.gridy = 3;
 				pParamsLan.add(lblDispatcherUploadKey, gbc_lblDispatcherUploadKey);
@@ -190,11 +213,53 @@ public class OtaUploadDialog extends JDialog {
 			{
 				tDispatcherUploadKey = new JTextField();
 				GridBagConstraints gbc_tDispatcherUploadKey = new GridBagConstraints();
+				gbc_tDispatcherUploadKey.insets = new Insets(0, 0, 5, 0);
 				gbc_tDispatcherUploadKey.fill = GridBagConstraints.BOTH;
 				gbc_tDispatcherUploadKey.gridx = 1;
 				gbc_tDispatcherUploadKey.gridy = 3;
 				pParamsLan.add(tDispatcherUploadKey, gbc_tDispatcherUploadKey);
 				tDispatcherUploadKey.setColumns(10);
+				tDispatcherUploadKey.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUploadKey"));
+			}
+			{
+				JLabel lblAzureIotHub = new JLabel("Azure IoT Hub connection string");
+				GridBagConstraints gbc_lblAzureIotHub = new GridBagConstraints();
+				gbc_lblAzureIotHub.anchor = GridBagConstraints.EAST;
+				gbc_lblAzureIotHub.insets = new Insets(0, 0, 5, 5);
+				gbc_lblAzureIotHub.gridx = 0;
+				gbc_lblAzureIotHub.gridy = 4;
+				pParamsLan.add(lblAzureIotHub, gbc_lblAzureIotHub);
+			}
+			{
+				tAzureConnectionString = new JTextField();
+				GridBagConstraints gbc_tAzureConnectionString = new GridBagConstraints();
+				gbc_tAzureConnectionString.insets = new Insets(0, 0, 5, 0);
+				gbc_tAzureConnectionString.fill = GridBagConstraints.HORIZONTAL;
+				gbc_tAzureConnectionString.gridx = 1;
+				gbc_tAzureConnectionString.gridy = 4;
+				pParamsLan.add(tAzureConnectionString, gbc_tAzureConnectionString);
+				tAzureConnectionString.setColumns(10);
+				tAzureConnectionString.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureConnectionString"));
+			}
+			{
+				lblDeviceId = new JLabel("Device ID");
+				GridBagConstraints gbc_lblDeviceId = new GridBagConstraints();
+				gbc_lblDeviceId.anchor = GridBagConstraints.EAST;
+				gbc_lblDeviceId.insets = new Insets(0, 0, 5, 5);
+				gbc_lblDeviceId.gridx = 0;
+				gbc_lblDeviceId.gridy = 5;
+				pParamsLan.add(lblDeviceId, gbc_lblDeviceId);
+			}
+			{
+				tDeviceId = new JTextField();
+				GridBagConstraints gbc_tDeviceId = new GridBagConstraints();
+				gbc_tDeviceId.insets = new Insets(0, 0, 5, 0);
+				gbc_tDeviceId.fill = GridBagConstraints.HORIZONTAL;
+				gbc_tDeviceId.gridx = 1;
+				gbc_tDeviceId.gridy = 5;
+				pParamsLan.add(tDeviceId, gbc_tDeviceId);
+				tDeviceId.setColumns(10);
+				tDeviceId.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureDeviceId"));
 			}
 		}
 		{
@@ -231,12 +296,24 @@ public class OtaUploadDialog extends JDialog {
 			rdbtnLanNonSecure.setSelected(true);
 			tDispatcherUrl.setEnabled(false);
 			tDispatcherUploadKey.setEnabled(false);
+			tAzureConnectionString.setEnabled(false);
+			tDeviceId.setEnabled(false);
 			tBoardIp.requestFocus();
 			break;
 		case METHOD_LAN_DISPATCHER:
 			rdbtnLanDispatcher.setSelected(true);
 			tDispatcherUrl.setEnabled(true);
 			tDispatcherUploadKey.setEnabled(true);
+			tAzureConnectionString.setEnabled(false);
+			tDeviceId.setEnabled(false);
+			tBoardIp.requestFocus();
+			break;
+		case METHOD_INTERNET:
+			rdbtnInternet.setSelected(true);
+			tDispatcherUrl.setEnabled(true);
+			tDispatcherUploadKey.setEnabled(true);
+			tAzureConnectionString.setEnabled(true);
+			tDeviceId.setEnabled(true);
 			tBoardIp.requestFocus();
 			break;
 		}
@@ -254,26 +331,65 @@ public class OtaUploadDialog extends JDialog {
 		}
 		
 		// save settings
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.boardIp", ip);
 		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.method", "" + method);
+		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.boardIp", ip);
+		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUrl", tDispatcherUrl.getText());
+		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUploadKey", tDispatcherUploadKey.getText());
+		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureConnectionString", tAzureConnectionString.getText());
+		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureDeviceId", tDeviceId.getText());
 		FlowerinoPlugin.getInstance().writeGlobalProperties();
 		
 		Runnable uploadTask = () -> {
+			Editor editor = FlowerinoPlugin.getInstance().getEditor();
 			try {
-				Editor editor = FlowerinoPlugin.getInstance().getEditor();
+				
+				// compile
 				editor.statusNotice("Compiling...");
 				String fileName = editor.getSketch().build(false, false);
 				String filePath = FlowerinoPlugin.getBuildFolder(editor.getSketch()) + File.separator + fileName + ".bin";
 				
+				// suspend serial monitor
+				Field field = Editor.class.getDeclaredField("serialMonitor");
+				field.setAccessible(true);
+				SerialMonitor serialMonitor = (SerialMonitor) field.get(editor);
+				if (serialMonitor != null) {
+					serialMonitor.suspend();
+				}
+		    	Thread.sleep(2000);
+				
+				// upload
 				editor.statusNotice("Uploading OTA...");
-				new OtaUpload(ip, 65500, filePath, FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature")).start();
+				switch(method) {
+					case METHOD_LAN_NON_SECURE:
+						new OtaUpload(filePath).localUpload(ip, FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature"));
+						break;
+					case METHOD_LAN_DISPATCHER:
+						new OtaUpload(filePath).dispatcherUpload(ip, tDispatcherUrl.getText(), tDispatcherUploadKey.getText(), "board1", "rAppGroup1");
+						break;
+					case METHOD_INTERNET:
+						new OtaUpload(filePath).azureUpload(tAzureConnectionString.getText(), tDeviceId.getText(), tDispatcherUrl.getText(), tDispatcherUploadKey.getText(), "board1", "rAppGroup1");
+						break;
+				}
 				editor.statusNotice("Done.");
 			} catch (Exception e) {
 				e.printStackTrace();
+			} finally {
+			    try {
+			    	Thread.sleep(3000);
+			    	Method method = Editor.class.getDeclaredMethod("resumeOrCloseSerialMonitor");
+			    	method.setAccessible(true);
+			    	method.invoke(editor);
+			    } catch (Exception e) {
+			    	e.printStackTrace();
+			    }
 			}
 		};
 		new Thread(uploadTask).start();
 		this.dispose();
+	}
+
+	public void uploadFileToDispatcher() {
+		
 	}
 	
 }
