@@ -143,7 +143,7 @@ public class OtaUploadDialog extends JDialog {
 			gbl_pParams.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 			pParams.setLayout(gbl_pParams);
 			{
-				lblServerSignature = new JLabel("Server signature");
+				lblServerSignature = new JLabel("<html>Server signature<br/>(please copy this in your sketch)</html>");
 				GridBagConstraints gbc_lblServerSignature = new GridBagConstraints();
 				gbc_lblServerSignature.anchor = GridBagConstraints.WEST;
 				gbc_lblServerSignature.fill = GridBagConstraints.VERTICAL;
@@ -231,7 +231,7 @@ public class OtaUploadDialog extends JDialog {
 			{
 				lblAzureConnectionString = new JLabel("Azure IoT Hub connection string");
 				GridBagConstraints gbc_lblAzureIotHub = new GridBagConstraints();
-				gbc_lblAzureIotHub.anchor = GridBagConstraints.EAST;
+				gbc_lblAzureIotHub.anchor = GridBagConstraints.WEST;
 				gbc_lblAzureIotHub.insets = new Insets(0, 0, 5, 5);
 				gbc_lblAzureIotHub.gridx = 0;
 				gbc_lblAzureIotHub.gridy = 4;
