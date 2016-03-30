@@ -38,8 +38,10 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowerplatform.flowerino.otaupload.OtaUploadDialog;
 import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
+import org.flowerplatform.flowerino_plugin.command.HeartbeatCommand;
 import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
 import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
+import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesAndCompileCommand;
 import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesCommand;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
@@ -63,6 +65,12 @@ import processing.app.tools.Tool;
 public class FlowerinoPlugin implements Tool {
 
 	public static final String RE_GENERATE_FROM_FLOWERINO_REPOSITORY = "(Re)generate from Flowerino Repository";
+	
+	/**
+	 * The name of the folder in which we store temp data related to work happening within flower platform.
+	 * Please note this name is not absolute, but relative (i.e. just the folder name, not the full path)
+	 */
+	public static final String FLOWER_PLATFORM_WORK_FOLDER_NAME = "flower-platform-work";
 
 	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
 		@Override
@@ -203,10 +211,12 @@ public class FlowerinoPlugin implements Tool {
 		try {
 			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
 			HttpServer server = new HttpServer(serverPort);
-			server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+			//server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+			server.registerCommand("compile", UpdateSourceFilesAndCompileCommand.class);
 			server.registerCommand("getBoards", GetBoardsCommand.class);
 			server.registerCommand("selectBoard", SelectBoardCommand.class);
 			server.registerCommand("setOptions", SetOptionsCommand.class);
+			server.registerCommand("heartbeat", HeartbeatCommand.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -455,7 +465,7 @@ public class FlowerinoPlugin implements Tool {
 	}
 
 	public static File getFlowerPlatformWorkFolder() {
-		File f = new File("F:\\flower-platform-work");
+		File f = new File("C:\\" + FLOWER_PLATFORM_WORK_FOLDER_NAME);
 		f.mkdirs();
 		return f;
 	}
