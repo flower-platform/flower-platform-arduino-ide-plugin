@@ -45,7 +45,7 @@ public class OtaUpload {
 		UploadThread uploadThread = new UploadThread(binData, downloadKey, serverSignature);
 
 		// send upload command
-        String downloadUrl = "http://" + InetAddress.getLocalHost().getHostAddress() + "/?downloadKey=" + downloadKey;
+        String downloadUrl = "http://" + InetAddress.getLocalHost().getHostAddress() + ":65201/?downloadKey=" + downloadKey;
 		sendUdpUploadCommand(boardIp, downloadUrl);
 
         while (uploadThread.started);
@@ -144,7 +144,7 @@ class UploadThread extends Thread {
 		started = true;
 		Socket soc = null;
 		try {
-	        serverSocket = new ServerSocket(80);
+	        serverSocket = new ServerSocket(65201);
 			serverSocket.setSoTimeout(10000);
 			soc = serverSocket.accept();
 			log("Board connected.");
