@@ -4,20 +4,21 @@ import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
 import org.flowerplatform.flowerino_plugin.SourceFileDto;
+import org.flowerplatform.flowerino_plugin.util.RunnableWithListener;
+import org.flowerplatform.flowerino_plugin.util.StartEndListener;
+import org.flowerplatform.flowerino_plugin.util.Util;
 import org.flowerplatform.tiny_http_server.HttpCommandException;
 import org.flowerplatform.tiny_http_server.IHttpCommand;
 import org.flowerplatform.tiny_http_server.ReflectionException;
 
 import processing.app.BaseNoGui;
 import processing.app.Editor;
-import processing.app.EditorStatus;
 
 /**
  * Loads the given files into Arduino IDE, and invokes compile on them.
@@ -97,10 +98,8 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 			}
 			@Override
 			public void end() {
-				EditorStatus editorStatus = null; 
 				try {
-					editorStatus = getPrivateField(Editor.class, editor, "status");
-					convertEditorStatusIntoCompilationResult(editorStatus, compilationListener);
+					convertEditorStatusIntoCompilationResult(editor, compilationListener);
 				} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException e1) {
 					log("Error while attempting to invoke compile.", e1);
 					// Don't forward this exception; just mark the fact that we've got an error,
@@ -114,8 +113,8 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 		};
 
 		try {
-			RunnableWithListener presentHandlerWrapper = new RunnableWithListener(getPrivateField(Editor.class, editor, "presentHandler"), compilationEndListener);
-			RunnableWithListener runHandlerWrapper = new RunnableWithListener(getPrivateField(Editor.class, editor, "runHandler"), compilationEndListener);
+			RunnableWithListener presentHandlerWrapper = new RunnableWithListener(Util.getPrivateField(Editor.class, editor, "presentHandler"), compilationEndListener);
+			RunnableWithListener runHandlerWrapper = new RunnableWithListener(Util.getPrivateField(Editor.class, editor, "runHandler"), compilationEndListener);
 			
 			editor.handleRun(false, presentHandlerWrapper, runHandlerWrapper);
 		} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException e1) {
@@ -202,77 +201,14 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 	 * calls the appropiate {@link CompilationListener#compilationSuccessful()} or
 	 * {@link CompilationListener#compilationFailed(HttpCommandException)()} method.
 	 */
-	private void convertEditorStatusIntoCompilationResult(EditorStatus editorStatus, CompilationListener compilationListener) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException {
-		Integer statusCode = getPrivateField(EditorStatus.class, editorStatus, "mode");
+	private void convertEditorStatusIntoCompilationResult(Editor editor, CompilationListener compilationListener) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException {
+		Util.EditorStatus editorStatus = Util.readStatus(editor);
 		
-		//final int NOTICE = getPrivateField(EditorStatus.class, "NOTICE");
-		final int ERR = getPrivateField(EditorStatus.class, EditorStatus.class, "ERR");
-		
-		if (statusCode == ERR) {
-			String message = getPrivateField(EditorStatus.class, editorStatus, "message");
-			compilationListener.compilationFailed(new HttpCommandException(message));
+		if (editorStatus.status == editorStatus.ERR) {
+			compilationListener.compilationFailed(new HttpCommandException(editorStatus.message));
 		} else {
 			compilationListener.compilationSuccessful();
 		}
-	}
-	
-	/**
-	 * Hackish method that retrieves a private field from the given class instance.
-	 * This is used to access stuff from within the main editor.
-	 * Please note that all exceptions are forwarded.
-	 */
-	private static <T>T getPrivateField(Class clazz, Object instance, String fieldName) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException {
-		Field presentHandler = clazz.getDeclaredField(fieldName); 
-		presentHandler.setAccessible(true);
-		
-		return (T)presentHandler.get(instance);
-	}
-	
-	/**
-	 * A {@link Runnable} extension which is able to notify its user when it has started/ended running.
-	 * In addition, this class wraps around a real instance of {@link Runnable}.
-	 *
-	 * This is used when invoking compilation in the Arduino editor, in order to know when the actual
-	 * compilation is finished.
-	 * 
-	 * @author Andrei Taras
-	 */
-	private static class RunnableWithListener implements Runnable {
-		private Runnable delegate;
-		private StartEndListener startEndListener;
-		
-		public RunnableWithListener(Runnable delegate, StartEndListener startEndListener) {
-			if (delegate == null) {
-				throw new NullPointerException("Can't build runnable with null delegate.");
-			}
-			if (startEndListener == null) {
-				throw new NullPointerException("Can't build runnable with null listener.");
-			}
-			
-			this.delegate = delegate;
-			this.startEndListener = startEndListener;
-		}
-
-		@Override
-		public void run() {
-			startEndListener.start();
-			try {
-				delegate.run();
-			} finally {
-				startEndListener.end();
-			}
-		}
-	}
-	
-	/**
-	 * Simple listener, which gets invoked both when "something" (a runnable, a process, etc) starts,
-	 * and when it ends.
-	 * 
-	 * @author Andrei Taras
-	 */
-	private static interface StartEndListener {
-		void start();
-		void end();
 	}
 	
 	private static interface CompilationListener {

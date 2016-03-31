@@ -42,7 +42,7 @@ import org.flowerplatform.flowerino_plugin.command.HeartbeatCommand;
 import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
 import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
 import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesAndCompileCommand;
-import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesCommand;
+import org.flowerplatform.flowerino_plugin.command.UploadToBoardCommand;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
@@ -212,6 +212,7 @@ public class FlowerinoPlugin implements Tool {
 			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
 			HttpServer server = new HttpServer(serverPort);
 			//server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+			server.registerCommand("uploadToBoard", UploadToBoardCommand.class);
 			server.registerCommand("compile", UpdateSourceFilesAndCompileCommand.class);
 			server.registerCommand("getBoards", GetBoardsCommand.class);
 			server.registerCommand("selectBoard", SelectBoardCommand.class);
