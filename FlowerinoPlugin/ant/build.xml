@@ -12,13 +12,13 @@
          ================================= -->
 	<target name="default" description="Add the class files to jar, and copies it to the Arduino tools folder.">
 		<loadfile property="version" srcfile="src/flowerino-plugin-version.txt"></loadfile>
-		<jar destfile="build/FlowerinoPlugin.jar" basedir="bin">
+		<jar destfile="build/FlowerPlatformPlugin.jar" basedir="bin">
 			<fileset dir="../../tiny-http-server/tiny-http-server/bin" />
 			<manifest>
 				<attribute name="Implementation-Version" value="${version}"/>
 			</manifest>
 		</jar>
-		<copy file="build/FlowerinoPlugin.jar" todir="${user.home}/Documents/Arduino/tools/FlowerinoPlugin/tool">
+		<copy file="build/FlowerPlatformPlugin.jar" todir="${user.home}/Documents/Arduino/tools/FlowerPlatformPlugin/tool">
 		</copy>
 	</target>
 
@@ -29,8 +29,9 @@
 	</target>
 				
 	<target name="zip" description="Builds and creates a ZIP that contains the right dir structure to use when unzipping in ARDUINO_SKETCHBOOK_DIR/tools" depends="default">
-		<zip destfile="build/FlowerinoPlugin_v${version}.zip">
-			<zipfileset dir="build" includes="FlowerinoPlugin.jar" prefix="FlowerinoPlugin/tool"/>
+		<zip destfile="build/FlowerPlatformPlugin_v${version}.zip">
+			<zipfileset dir="build" includes="FlowerPlatformPlugin.jar" prefix="FlowerPlatformPlugin/tool"/>
+			<zipfileset dir="lib" includes="*" prefix="FlowerPlatformPlugin/tool"/>
 		</zip>
 	</target>
 

@@ -60,11 +60,11 @@ import processing.app.tools.Tool;
 /**
  * @author Cristian Spiescu
  */
-public class FlowerinoPlugin implements Tool {
+public class FlowerPlatformPlugin implements Tool {
 
 	public static final String RE_GENERATE_FROM_FLOWERINO_REPOSITORY = "(Re)generate from Flowerino Repository";
 
-	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerPlatformPlugin.this) {
 		@Override
 		protected void runAfterValidation() {
 			if (!libraryVersionCheckedOnce.contains(resourceNodeUri)) {
@@ -111,7 +111,7 @@ public class FlowerinoPlugin implements Tool {
 		}
 	};
 	
-	protected ActionListener downloadLibsActionListener = new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+	protected ActionListener downloadLibsActionListener = new ResourceNodeRequiredActionListener(FlowerPlatformPlugin.this) {
 		@Override
 		protected void runAfterValidation() {
 			showLibraryManager(resourceNodeUri, false);
@@ -119,7 +119,7 @@ public class FlowerinoPlugin implements Tool {
 	};
 	
 	protected void showLibraryManager(String resourceNodeUri, boolean showDialogOnlyIfUpdateNeeded) {
-		LibraryManager lm = new LibraryManager(FlowerinoPlugin.this, resourceNodeUri);
+		LibraryManager lm = new LibraryManager(FlowerPlatformPlugin.this, resourceNodeUri);
 		boolean updateNeeded = lm.refreshTable();
 		
 		if (showDialogOnlyIfUpdateNeeded && !updateNeeded) {
@@ -136,7 +136,7 @@ public class FlowerinoPlugin implements Tool {
 
 	public static AbstractLibraryInstallerWrapper libraryInstallerWrapper;
 
-	private static FlowerinoPlugin INSTANCE;
+	private static FlowerPlatformPlugin INSTANCE;
 
 	protected Editor editor;
 	protected String serverUrl;
@@ -215,7 +215,7 @@ public class FlowerinoPlugin implements Tool {
 		editor.addComponentListener(new ComponentListener() {
 			@Override
 			public void componentShown(ComponentEvent e) {
-				log("Flowerino Plugin v" + version + " is loading. Using server URL: " + serverUrl);
+				log("Flower Platform Plugin v" + version + " is loading. Using server URL: " + serverUrl);
 				initLegacySupport();
 				new Thread(new Runnable() {
 					@Override
@@ -239,39 +239,41 @@ public class FlowerinoPlugin implements Tool {
 				}).start();
 				
 				// initialize the menu
-				JMenu menu = new JMenu("Flowerino");
-			    JMenuItem generateMenu = new JMenuItem(RE_GENERATE_FROM_FLOWERINO_REPOSITORY);
-				menu.add(generateMenu);
-				generateMenu.addActionListener(generateActionListener);
-				menu.addSeparator();
-				
-			    JMenuItem associateMenu = new JMenuItem("Add/Edit Link to Flowerino Repository");
-				menu.add(associateMenu);
-				associateMenu.addActionListener(evt -> editLinkedRepository(false));
-				
-			    JMenuItem downloadLibs = new JMenuItem("Download Required Libs");
-				menu.add(downloadLibs);
-				downloadLibs.addActionListener(downloadLibsActionListener);
-				menu.addSeparator();
-
-				menu.add(new JMenuItem("Go to Diagrams: Flowerino > Linked Repository (external web browser)")).addActionListener(new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
-					@Override
-					protected void runAfterValidation() {
-						try {
-							String[] spl = fullRepository.split("/");
-							navigateUrl(serverUrl + "/#/repositories/page/" + spl[0] + URLEncoder.encode("|", "UTF-8") + spl[1] + "/diagram-editor");
-						} catch (IOException e1) {
-							log("Cannot open url: " + serverUrl, e1);
-						}
-					}
-				});
-				
-				menu.add(new JMenuItem("Go to Flowerino > Browse Repositories (external web browser)")).addActionListener(e1 -> navigateUrl(serverUrl));
-				menu.add(new JMenuItem("Go to Flowerino Web Site (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com/flowerino"));
+				JMenu menu = new JMenu("Flower Platform");
 				
 				// add Zero OTA Upload menu item
 				menu.add(new JMenuItem("Upload OTA - MKR1000 / Zero")).addActionListener(e1 -> zeroOtaUpload());
+				menu.addSeparator();
+				
+			    JMenuItem generateMenu = new JMenuItem(RE_GENERATE_FROM_FLOWERINO_REPOSITORY);
+//				menu.add(generateMenu);
+				generateMenu.addActionListener(generateActionListener);
+//				menu.addSeparator();
+				
+			    JMenuItem associateMenu = new JMenuItem("Add/Edit Link to Flowerino Repository");
+//				menu.add(associateMenu);
+				associateMenu.addActionListener(evt -> editLinkedRepository(false));
+				
+			    JMenuItem downloadLibs = new JMenuItem("Download Required Libs");
+//				menu.add(downloadLibs);
+				downloadLibs.addActionListener(downloadLibsActionListener);
+//				menu.addSeparator();
 
+//				menu.add(new JMenuItem("Go to Diagrams: Flowerino > Linked Repository (external web browser)")).addActionListener(new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+//					@Override
+//					protected void runAfterValidation() {
+//						try {
+//							String[] spl = fullRepository.split("/");
+//							navigateUrl(serverUrl + "/#/repositories/page/" + spl[0] + URLEncoder.encode("|", "UTF-8") + spl[1] + "/diagram-editor");
+//						} catch (IOException e1) {
+//							log("Cannot open url: " + serverUrl, e1);
+//						}
+//					}
+//				});
+				
+//				menu.add(new JMenuItem("Go to Flowerino > Browse Repositories (external web browser)")).addActionListener(e1 -> navigateUrl(serverUrl));
+				menu.add(new JMenuItem("Go to Flower Platform (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com"));
+				
 				editor.getJMenuBar().add(menu, editor.getJMenuBar().getComponentCount() - 1);
 				editor.getJMenuBar().revalidate();
 			}
@@ -370,7 +372,7 @@ public class FlowerinoPlugin implements Tool {
 	}
 	
 	public File getGlobalPropertiesFile() {
-		return new File(BaseNoGui.getSketchbookFolder(), ".flowerino");
+		return new File(BaseNoGui.getSketchbookFolder(), ".flower-platform");
 	}
 
 	public Properties readProperties(File file) {
@@ -460,7 +462,7 @@ public class FlowerinoPlugin implements Tool {
 		return f;
 	}
 	
-	public static FlowerinoPlugin getInstance() {
+	public static FlowerPlatformPlugin getInstance() {
 		return INSTANCE;
 	}
 	

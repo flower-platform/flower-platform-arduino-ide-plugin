@@ -27,7 +27,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 
 import processing.app.Editor;
 import processing.app.SerialMonitor;
@@ -163,7 +163,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tServerSignature.gridy = 0;
 				pParams.add(tServerSignature, gbc_tServerSignature);
 				tServerSignature.setColumns(10);
-				tServerSignature.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature"));
+				tServerSignature.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature"));
 			}
 			{
 				lblBoardIp = new JLabel("Board IP");
@@ -184,7 +184,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tBoardIp.gridy = 1;
 				pParams.add(tBoardIp, gbc_tBoardIp);
 				tBoardIp.setColumns(10);
-				tBoardIp.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.boardIp"));
+				tBoardIp.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.boardIp"));
 			}
 			{
 				lblDispatcherUrl = new JLabel("Dispatcher URL");
@@ -205,7 +205,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tDispatcherUrl.gridy = 2;
 				pParams.add(tDispatcherUrl, gbc_tDispatcherUrl);
 				tDispatcherUrl.setColumns(10);
-				tDispatcherUrl.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUrl"));
+				tDispatcherUrl.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUrl"));
 			}
 			{
 				lblDispatcherUploadKey = new JLabel("Dispatcher upload key");
@@ -226,7 +226,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tDispatcherUploadKey.gridy = 3;
 				pParams.add(tDispatcherUploadKey, gbc_tDispatcherUploadKey);
 				tDispatcherUploadKey.setColumns(10);
-				tDispatcherUploadKey.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUploadKey"));
+				tDispatcherUploadKey.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.dispatcherUploadKey"));
 			}
 			{
 				lblAzureConnectionString = new JLabel("Azure IoT Hub connection string");
@@ -246,7 +246,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tAzureConnectionString.gridy = 4;
 				pParams.add(tAzureConnectionString, gbc_tAzureConnectionString);
 				tAzureConnectionString.setColumns(10);
-				tAzureConnectionString.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureConnectionString"));
+				tAzureConnectionString.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureConnectionString"));
 			}
 			{
 				lblDeviceId = new JLabel("Device ID");
@@ -266,7 +266,7 @@ public class OtaUploadDialog extends JDialog {
 				gbc_tDeviceId.gridy = 5;
 				pParams.add(tDeviceId, gbc_tDeviceId);
 				tDeviceId.setColumns(10);
-				tDeviceId.setText(FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureDeviceId"));
+				tDeviceId.setText(FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.azureDeviceId"));
 			}
 		}
 		{
@@ -362,22 +362,22 @@ public class OtaUploadDialog extends JDialog {
 		}
 		
 		// save settings
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.method", "" + method);
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.boardIp", ip);
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUrl", tDispatcherUrl.getText());
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUploadKey", tDispatcherUploadKey.getText());
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureConnectionString", tAzureConnectionString.getText());
-		FlowerinoPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureDeviceId", tDeviceId.getText());
-		FlowerinoPlugin.getInstance().writeGlobalProperties();
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.method", "" + method);
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.boardIp", ip);
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUrl", tDispatcherUrl.getText());
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.dispatcherUploadKey", tDispatcherUploadKey.getText());
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureConnectionString", tAzureConnectionString.getText());
+		FlowerPlatformPlugin.getInstance().getGlobalProperties().setProperty("otaUpload.azureDeviceId", tDeviceId.getText());
+		FlowerPlatformPlugin.getInstance().writeGlobalProperties();
 		
 		Runnable uploadTask = () -> {
-			Editor editor = FlowerinoPlugin.getInstance().getEditor();
+			Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 			try {
 				
 				// compile
 				editor.statusNotice("Compiling...");
 				String fileName = editor.getSketch().build(false, false);
-				String filePath = FlowerinoPlugin.getBuildFolder(editor.getSketch()) + File.separator + fileName + ".bin";
+				String filePath = FlowerPlatformPlugin.getBuildFolder(editor.getSketch()) + File.separator + fileName + ".bin";
 				
 				// suspend serial monitor
 				Field field = Editor.class.getDeclaredField("serialMonitor");
@@ -392,7 +392,7 @@ public class OtaUploadDialog extends JDialog {
 				editor.statusNotice("Uploading OTA...");
 				switch(method) {
 					case METHOD_LAN_NON_SECURE:
-						new OtaUpload(filePath).localUpload(ip, FlowerinoPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature"));
+						new OtaUpload(filePath).localUpload(ip, FlowerPlatformPlugin.getInstance().getGlobalProperties().getProperty("otaUpload.serverSignature"));
 						break;
 					case METHOD_LAN_DISPATCHER:
 						new OtaUpload(filePath).dispatcherUpload(ip, tDispatcherUrl.getText(), tDispatcherUploadKey.getText(), "board1", "rAppGroup1");

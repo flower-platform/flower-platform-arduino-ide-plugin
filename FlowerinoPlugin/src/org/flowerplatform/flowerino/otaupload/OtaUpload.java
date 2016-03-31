@@ -1,6 +1,6 @@
 package org.flowerplatform.flowerino.otaupload;
 
-import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
+import static org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin.log;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
