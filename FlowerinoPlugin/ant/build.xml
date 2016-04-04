@@ -34,12 +34,17 @@
 		</zip>
 	</target>
 
-	<property name="arduino_1_6_7_base_dir" value="D:/workspace/arduino_ide"/>
 	
 	<!-- Test runner for Arduino IDE v1.6.7 suite -->
-	<target name="runTests_1_6_7">
-		<junit printsummary="yes" haltonfailure="yes" fork="true" jvm="${arduino_1_6_7_base_dir}/java/bin/javaw.exe">
-
+	<target name="runTestsBase">
+		<junit printsummary="yes" haltonfailure="yes" fork="true" jvm="${arduino_base_dir}/java/bin/javaw.exe">
+			
+			<jvmarg value="-Dsun.java2d.d3d=false"/>
+			<jvmarg value="-Xms128M"/>
+			<jvmarg value="-Xmx512M"/>
+			
+			<jvmarg value="-DAPP_DIR=&quot;${arduino_base_dir}&quot;"/>
+			
 			<!-- Dependencies needed for running tests -->
 			<classpath>
 				<pathelement location="test_deps/junit-4.12.jar"/>
@@ -56,14 +61,27 @@
 			
 			<!-- The Arduino IDE jars, needed for actually launching Arduino IDE. -->
 			<classpath>
-				<fileset dir="${arduino_1_6_7_base_dir}/lib">
+				<fileset dir="${arduino_base_dir}/lib">
 					<include name="**/*.jar" />
 				</fileset>
 			</classpath>
 			
-			<test name="org.flowerplatform.flowerino_plugin.ArduinoIde_v167_TestSuiteLauncher" haltonfailure="no" outfile="result">
+			<test name="${suite_test}" haltonfailure="no" outfile="result">
 				<formatter type="xml" usefile="false"/>
 			</test>
 		</junit>
 	</target>
+	
+	<target name="runTests_1_6_7">
+		<property name="arduino_base_dir" value="D:/Arduino_IDEs/arduino-1.6.7"/>
+		<property name="suite_test" value="org.flowerplatform.flowerino_plugin.ArduinoIde_v167_TestSuiteLauncher"/>
+		<antcall target="runTestsBase" />		
+	</target>
+	
+	<target name="runTests_1_6_8">
+		<property name="arduino_base_dir" value="D:/Arduino_IDEs/arduino-1.6.8"/>
+		<property name="suite_test" value="org.flowerplatform.flowerino_plugin.ArduinoIde_v168_TestSuiteLauncher"/>
+		<antcall target="runTestsBase" />		
+	</target>
+	
 </project>
