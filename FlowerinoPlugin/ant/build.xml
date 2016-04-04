@@ -7,6 +7,14 @@
             description
     </description>
 
+	<property name="libSrc" value="test_deps"/>
+	
+	<property name="junitSuiteTests" value="AllTests2"/>
+	
+	<property name="resultsDir" value="results"/>
+	
+	<property name="binSrc" value="bin"/>
+	
 	<!-- ================================= 
           target: default              
          ================================= -->
@@ -33,5 +41,61 @@
 			<zipfileset dir="build" includes="FlowerinoPlugin.jar" prefix="FlowerinoPlugin/tool"/>
 		</zip>
 	</target>
+	
+	
+	
+	<target name="getJunitLibs">
+		<mkdir dir="${libSrc}"/>
+		<get dest="${libSrc}/ant-junit.jar" src="http://search.maven.org/remotecontent?filepath=org/apache/ant/ant-junit/1.9.4/ant-junit-1.9.4.jar"/>
+		<get dest="${libSrc}/junit.jar" src="http://search.maven.org/remotecontent?filepath=junit/junit/4.11/junit-4.11.jar"/>
+		<get dest="${libSrc}/hamcrest-core-1.3.jar" src="http://central.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"/>
+	</target>
+	
+	
+	<path id="JUnit.library">
+	    <pathelement location="${libSrc}/junit.jar"/>
+	    <pathelement location="${libSrc}/ant-junit.jar"/>
+	</path>
+	
+	<path id="Tests.classpath">
+	    <pathelement location="${binSrc}"/>
+	    <path refid="JUnit.library"/>
+		<fileset dir="${libSrc}">
+		        <include name="**/*.jar"/>
+		</fileset>
+	</path>
+	
+	
+	
+	<target name="AllTests">
+		<mkdir dir="${resultsDir}"/>
+				
+		<junit   fork="yes" printsummary="withOutAndErr">
+			<formatter type="plain"/>
+			
+			<batchtest fork="yes" todir="${resultsDir}">
+			    <fileset dir="test">
+			      <include name="**/*.java"/>
+			    </fileset>
+			</batchtest>
+			
+			
+			<classpath refid="Tests.classpath"/>
+		</junit>
+		
+	</target>
+	
+	<property name="arduinoPath" value="D:\Arduino_IDEs"/>
 
+	<target name="runIDE">
+		<java jvm="D:\Arduino_IDEs\arduino-1.6.7\java\bin\javaw.exe" fork="true">
+			<classpath>
+			        <pathelement location="${ant.home}/lib/ant-launcher.jar"/>
+			   </classpath>
+		</java>
+	</target>
+	
+	
+	
+	
 </project>
