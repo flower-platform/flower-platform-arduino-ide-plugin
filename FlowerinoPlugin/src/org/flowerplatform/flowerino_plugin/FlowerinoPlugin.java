@@ -295,7 +295,7 @@ public class FlowerinoPlugin implements Tool {
 			public void componentHidden(ComponentEvent e) {}
 		});
 	}
-	
+
 	protected void initLegacySupport() {
 		String currentVersionStr = "0.0.0";
 		try {
