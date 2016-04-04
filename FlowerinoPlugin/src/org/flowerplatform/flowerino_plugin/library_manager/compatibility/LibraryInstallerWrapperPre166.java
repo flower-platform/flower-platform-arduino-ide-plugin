@@ -21,7 +21,7 @@ public class LibraryInstallerWrapperPre166 extends AbstractLibraryInstallerWrapp
 	protected Method install;
 	
 	public static LibrariesIndexer librariesIndexer;
-	
+
 	public LibraryInstallerWrapperPre166() {
 		super();
 		try {
