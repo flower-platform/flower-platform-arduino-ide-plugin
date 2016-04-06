@@ -54,7 +54,7 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 	/**
 	 * Persists the given files on disk, and opens the *.ino file in the editor.
 	 */
-	private void saveAndOpenInEditor(File dir) {
+	private void saveAndOpenInEditor(File dir) throws ReflectionException {
 		// update source files
 		for (SourceFileDto srcFile : this) {
 			if (srcFile.getName().endsWith("." + STANDARD_EXTENSION)) {
@@ -77,10 +77,8 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 			Method handleOpenInternal = Editor.class.getDeclaredMethod("handleOpenInternal", File.class);
 			handleOpenInternal.setAccessible(true);
 		    handleOpenInternal.invoke(editor, new File(dir.getAbsolutePath() + File.separator + FlowerinoPlugin.FLOWER_PLATFORM_WORK_FOLDER_NAME + ".ino"));
-		} catch (NoSuchMethodException | SecurityException
-				| IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e1) {
-			log("Reflection error while loading files in editor.", e1);
+		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
+			throw new ReflectionException("Reflection error.", e1);
 		}
 		log("Sketch reloaded from Flowerino repository");
 	}
