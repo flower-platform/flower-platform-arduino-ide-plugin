@@ -10,9 +10,12 @@ import org.flowerplatform.tiny_http_server.IHttpCommand;
  * @author Andrei Taras
  */
 public class HeartbeatCommand implements IHttpCommand {
+	
+	public static final String STATUS_OK = "Ok";
+	
 	@Override
 	public Object run() {
 		//Don't actually do anything, but return a simple status.
-		return new Status("Ok");
+		return new Status(STATUS_OK);
 	}
 }

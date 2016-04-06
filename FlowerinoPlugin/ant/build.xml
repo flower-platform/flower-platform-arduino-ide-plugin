@@ -51,6 +51,7 @@
 				<pathelement location="test_deps/hamcrest-core-1.3.jar"/>
 				<pathelement location="test_deps/junit-toolbox-2.2.jar"/>
 				<pathelement location="test_deps/commons-io-2.4.jar"/>
+				<pathelement location="test/resources/"/>
 			</classpath>
 			
 			<!-- The regular, and test classes from the current project (i.e. Flowerino) -->
