@@ -73,12 +73,14 @@
 		</junit>
 	</target>
 	
+	<!-- Runs the whole test suite against an Arduino v1.6.7 IDE -->
 	<target name="runTests_1_6_7">
 		<property name="arduino_base_dir" value="D:/Arduino_IDEs/arduino-1.6.7"/>
 		<property name="suite_test" value="org.flowerplatform.flowerino_plugin.ArduinoIde_v167_TestSuiteLauncher"/>
 		<antcall target="runTestsBase" />		
 	</target>
 	
+	<!-- Runs the whole test suite against an Arduino v1.6.8 IDE -->
 	<target name="runTests_1_6_8">
 		<property name="arduino_base_dir" value="D:/Arduino_IDEs/arduino-1.6.8"/>
 		<property name="suite_test" value="org.flowerplatform.flowerino_plugin.ArduinoIde_v168_TestSuiteLauncher"/>
