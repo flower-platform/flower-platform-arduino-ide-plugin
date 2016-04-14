@@ -1,6 +1,6 @@
 package org.flowerplatform.flowerino_plugin.command;
 
-import org.flowerplatform.flowerino_plugin.Status;
+import org.flowerplatform.tiny_http_server.DefaultResponse;
 import org.flowerplatform.tiny_http_server.IHttpCommand;
 
 /**
@@ -11,11 +11,11 @@ import org.flowerplatform.tiny_http_server.IHttpCommand;
  */
 public class HeartbeatCommand implements IHttpCommand {
 	
-	public static final String STATUS_OK = "Ok";
+	public static final String MESSAGE_OK = "Ok";
 	
 	@Override
 	public Object run() {
 		//Don't actually do anything, but return a simple status.
-		return new Status(STATUS_OK);
+		return new DefaultResponse(DefaultResponse.CODE_OK, MESSAGE_OK);
 	}
 }
