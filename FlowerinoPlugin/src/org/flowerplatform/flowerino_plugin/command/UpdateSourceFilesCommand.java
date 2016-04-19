@@ -17,7 +17,7 @@ import processing.app.BaseNoGui;
 import processing.app.Editor;
 
 /**
- * 
+ * TODO: This is currently unused; need to see if we really need it; if not => we can remove.
  * @author Claudiu Matei
  *
  */

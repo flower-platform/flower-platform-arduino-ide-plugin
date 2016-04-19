@@ -11,6 +11,15 @@ public class SourceFileDto {
 	
 	private String contents;
 
+	public SourceFileDto() { 
+	}
+	
+	public SourceFileDto(String name, String contents) {
+		super();
+		this.name = name;
+		this.contents = contents;
+	}
+
 	public String getName() {
 		return name;
 	}

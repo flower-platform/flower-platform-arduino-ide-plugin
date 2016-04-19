@@ -216,6 +216,7 @@ public class FlowerPlatformPlugin implements Tool {
 			server.registerCommand("getBoards", GetBoardsCommand.class);
 			server.registerCommand("selectBoard", SelectBoardCommand.class);
 			server.registerCommand("setOptions", SetOptionsCommand.class);
+			server.registerCommand("heartbeat", HeartbeatCommand.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -466,8 +467,8 @@ public class FlowerPlatformPlugin implements Tool {
 	}
 
 	public static File getFlowerPlatformWorkFolder() {
-//		File f = new File("C:\\" + FLOWER_PLATFORM_WORK_FOLDER_NAME);
-		File f = new File("F:\\flower-platform-work");
+		File f = new File("C:\\" + FLOWER_PLATFORM_WORK_FOLDER_NAME);
+//		File f = new File("F:\\flower-platform-work");
 // TODO CS/REVIEW: despre ce e vorba cu aceasta hardcodare?
 		f.mkdirs();
 		return f;
