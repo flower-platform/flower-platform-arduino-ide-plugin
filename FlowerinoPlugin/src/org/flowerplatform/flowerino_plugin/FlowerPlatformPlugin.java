@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -40,22 +39,23 @@ import org.flowerplatform.flowerino.otaupload.OtaUploadDialog;
 import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
 import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
 import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
-import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesCommand;
+import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesAndCompileCommand;
+import org.flowerplatform.flowerino_plugin.command.UploadToBoardCommand;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
 import org.flowerplatform.tiny_http_server.HttpServer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.zafarkhaja.semver.Version;
-
-import cc.arduino.contributions.VersionHelper;
 import processing.app.BaseNoGui;
 import processing.app.Editor;
 import processing.app.Sketch;
 import processing.app.SketchData;
 import processing.app.tools.Tool;
+import cc.arduino.contributions.VersionHelper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.zafarkhaja.semver.Version;
 
 /**
  * @author Cristian Spiescu
@@ -63,6 +63,12 @@ import processing.app.tools.Tool;
 public class FlowerPlatformPlugin implements Tool {
 
 	public static final String RE_GENERATE_FROM_FLOWERINO_REPOSITORY = "(Re)generate from Flowerino Repository";
+
+	/**
+	 * The name of the folder in which we store temp data related to work happening within flower platform.
+	 * Please note this name is not absolute, but relative (i.e. just the folder name, not the full path)
+	 */
+	public static final String FLOWER_PLATFORM_WORK_FOLDER_NAME = "flower-platform-work";
 
 	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerPlatformPlugin.this) {
 		@Override
@@ -203,7 +209,10 @@ public class FlowerPlatformPlugin implements Tool {
 		try {
 			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
 			HttpServer server = new HttpServer(serverPort);
-			server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+			//server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+// TODO CS/REVIEW: ce e cu codul asta gunoi? mai avem/nu mai avem nevoie?
+			server.registerCommand("uploadToBoard", UploadToBoardCommand.class);
+			server.registerCommand("compile", UpdateSourceFilesAndCompileCommand.class);
 			server.registerCommand("getBoards", GetBoardsCommand.class);
 			server.registerCommand("selectBoard", SelectBoardCommand.class);
 			server.registerCommand("setOptions", SetOptionsCommand.class);
@@ -457,7 +466,9 @@ public class FlowerPlatformPlugin implements Tool {
 	}
 
 	public static File getFlowerPlatformWorkFolder() {
+//		File f = new File("C:\\" + FLOWER_PLATFORM_WORK_FOLDER_NAME);
 		File f = new File("F:\\flower-platform-work");
+// TODO CS/REVIEW: despre ce e vorba cu aceasta hardcodare?
 		f.mkdirs();
 		return f;
 	}

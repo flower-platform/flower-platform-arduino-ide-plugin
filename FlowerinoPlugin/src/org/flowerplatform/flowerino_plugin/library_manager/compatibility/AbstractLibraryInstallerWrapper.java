@@ -1,10 +1,5 @@
 package org.flowerplatform.flowerino_plugin.library_manager.compatibility;
 
-import java.lang.reflect.Field;
-
-import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
-
-import processing.app.Base;
 import cc.arduino.contributions.libraries.ContributedLibrary;
 import cc.arduino.contributions.libraries.LibraryInstaller;
 
