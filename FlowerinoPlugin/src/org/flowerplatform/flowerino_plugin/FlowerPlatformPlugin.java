@@ -37,6 +37,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowerplatform.flowerino.otaupload.OtaUploadDialog;
 import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
+import org.flowerplatform.flowerino_plugin.command.HeartbeatCommand;
 import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
 import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
 import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesAndCompileCommand;
@@ -45,17 +46,18 @@ import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
+import org.flowerplatform.tiny_http_server.FlexRequestHandler;
 import org.flowerplatform.tiny_http_server.HttpServer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.zafarkhaja.semver.Version;
+
+import cc.arduino.contributions.VersionHelper;
 import processing.app.BaseNoGui;
 import processing.app.Editor;
 import processing.app.Sketch;
 import processing.app.SketchData;
 import processing.app.tools.Tool;
-import cc.arduino.contributions.VersionHelper;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.zafarkhaja.semver.Version;
 
 /**
  * @author Cristian Spiescu
@@ -209,6 +211,9 @@ public class FlowerPlatformPlugin implements Tool {
 		try {
 			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
 			HttpServer server = new HttpServer(serverPort);
+			// Set special handler which reports errors as (200 OK) messages, with code and message.
+			server.setRequestHandler(new FlexRequestHandler());
+			
 			//server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
 // TODO CS/REVIEW: ce e cu codul asta gunoi? mai avem/nu mai avem nevoie?
 			server.registerCommand("uploadToBoard", UploadToBoardCommand.class);
