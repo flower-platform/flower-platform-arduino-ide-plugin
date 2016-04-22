@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
 
 import cc.arduino.utils.FileHash;
@@ -51,7 +51,7 @@ public class RequiredLibraryWrapper extends UserLibrary {
 			try {
 				checksum = FileHash.hash(new File(librariesIndexer.getStagingFolder(), getArchiveFileName()), "SHA-256");
 			} catch (NoSuchAlgorithmException | IOException e) {
-				FlowerinoPlugin.log("Cannot calculate checksum", e);
+				FlowerPlatformPlugin.log("Cannot calculate checksum", e);
 			}
 		}
 		return checksum;

@@ -3,7 +3,7 @@ package org.flowerplatform.flowerino_plugin.library_manager.compatibility;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 
 import processing.app.BaseNoGui;
 import cc.arduino.contributions.libraries.ContributedLibrary;
@@ -28,7 +28,7 @@ public class LibraryInstallerWrapperPre166 extends AbstractLibraryInstallerWrapp
 			remove = installer.getClass().getDeclaredMethod("remove", ContributedLibrary.class);
 			install = installer.getClass().getDeclaredMethod("install", ContributedLibrary.class, ContributedLibrary.class);
 		} catch (NoSuchMethodException | SecurityException e) {
-			FlowerinoPlugin.log("Cannot delegate to LibraryInstaller", e);
+			FlowerPlatformPlugin.log("Cannot delegate to LibraryInstaller", e);
 		}
 	}
 
@@ -42,7 +42,7 @@ public class LibraryInstallerWrapperPre166 extends AbstractLibraryInstallerWrapp
 			installer = new LibraryInstaller(librariesIndexer, BaseNoGui.getPlatform());
 		} catch (NoSuchFieldException | SecurityException
 				| IllegalArgumentException | IllegalAccessException e) {
-			FlowerinoPlugin.log("Cannot instantiate LibraryInstaller", e);
+			FlowerPlatformPlugin.log("Cannot instantiate LibraryInstaller", e);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class LibraryInstallerWrapperPre166 extends AbstractLibraryInstallerWrapp
 	@Override
 	public void install(ContributedLibrary lib, ContributedLibrary replacedLib) throws Exception {
 		install.invoke(installer, lib, replacedLib);
-		FlowerinoPlugin.log("Please restart Arduino IDE, so that the installed lib is taken into account.");
+		FlowerPlatformPlugin.log("Please restart Arduino IDE, so that the installed lib is taken into account.");
 	}
 
 }

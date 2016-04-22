@@ -9,7 +9,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuListener;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.tiny_http_server.IHttpCommand;
 
 import processing.app.Editor;
@@ -22,7 +22,7 @@ import processing.app.Editor;
 public class GetBoardsCommand implements IHttpCommand {
 
 	public Object run() {
-		Editor editor = FlowerinoPlugin.getInstance().getEditor();
+		Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 		JMenuBar menuBar = editor.getJMenuBar();
 		JMenu toolsMenu = menuBar.getMenu(3);
 		toolsMenu.getListeners(MenuListener.class)[0].menuSelected(null);

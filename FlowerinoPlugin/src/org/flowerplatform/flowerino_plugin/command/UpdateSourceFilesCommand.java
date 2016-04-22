@@ -1,6 +1,6 @@
 package org.flowerplatform.flowerino_plugin.command;
 
-import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
+import static org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.SourceFileDto;
 import org.flowerplatform.tiny_http_server.IHttpCommand;
 
@@ -30,7 +30,7 @@ public class UpdateSourceFilesCommand extends ArrayList<SourceFileDto> implement
 	private static final String FLOWER_PLATFORM_WORK_INO = "flower-platform-work.ino";
 
 	public Object run() {
-		File dir = FlowerinoPlugin.getFlowerPlatformWorkFolder();
+		File dir = FlowerPlatformPlugin.getFlowerPlatformWorkFolder();
 		
 		//delete all files in work folder
 		for (File f : dir.listFiles()) {
@@ -52,7 +52,7 @@ public class UpdateSourceFilesCommand extends ArrayList<SourceFileDto> implement
 		}
 		
 		// reload project
-		Editor editor = FlowerinoPlugin.getInstance().getEditor();
+		Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 	    editor.internalCloseRunner();
 		try {
 			Method handleOpenInternal = Editor.class.getDeclaredMethod("handleOpenInternal", File.class);

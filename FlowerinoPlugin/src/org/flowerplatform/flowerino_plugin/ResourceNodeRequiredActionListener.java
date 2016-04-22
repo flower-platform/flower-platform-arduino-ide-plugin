@@ -11,14 +11,14 @@ import java.awt.event.ActionListener;
  */
 public abstract class ResourceNodeRequiredActionListener implements ActionListener {
 
-	protected FlowerinoPlugin flowerinoDesktopAgent;
+	protected FlowerPlatformPlugin flowerinoDesktopAgent;
 	
 	protected String resourceNodeUri;
 	
 	protected String fullRepository;
 	
 	public ResourceNodeRequiredActionListener(
-			FlowerinoPlugin flowerinoDesktopAgent) {
+			FlowerPlatformPlugin flowerinoDesktopAgent) {
 		super();
 		this.flowerinoDesktopAgent = flowerinoDesktopAgent;
 	}

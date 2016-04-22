@@ -25,7 +25,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableColumn;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManagerEntry.Action;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManagerEntry.Status;
 import org.flowerplatform.flowerino_plugin.library_manager.renderer.ActionCellRenderer;
@@ -56,14 +56,14 @@ public class LibraryManager extends JDialog {
 
 	private JScrollPane textPaneScrollPane;
 	
-	private FlowerinoPlugin flowerinoDesktopAgent;
+	private FlowerPlatformPlugin flowerinoDesktopAgent;
 	
 	private String resourceNodeUri;
 
 	/**
 	 * Create the frame.
 	 */
-	public LibraryManager(FlowerinoPlugin flowerinoDesktopAgent, String resourceNodeUri) {
+	public LibraryManager(FlowerPlatformPlugin flowerinoDesktopAgent, String resourceNodeUri) {
 		super(flowerinoDesktopAgent.getEditor(), true);
 		this.flowerinoDesktopAgent = flowerinoDesktopAgent;
 		this.resourceNodeUri = resourceNodeUri;
@@ -167,7 +167,7 @@ public class LibraryManager extends JDialog {
 			try {
 				entry.setExistingHeaderFiles(Base.headerListFromIncludePath(lib.getSrcFolder()));
 			} catch (IOException e) {
-				FlowerinoPlugin.log("Cannot get header files for dir = " + lib.getSrcFolder(), e);
+				FlowerPlatformPlugin.log("Cannot get header files for dir = " + lib.getSrcFolder(), e);
 				continue;
 			}
 			
@@ -302,22 +302,22 @@ public class LibraryManager extends JDialog {
 		
 		try {
 			for (LibraryManagerEntry entry : model.getEntries()) {
-				FlowerinoPlugin.log("For required library: " + entry.getName() + ", applying action: " + entry.getAction());
+				FlowerPlatformPlugin.log("For required library: " + entry.getName() + ", applying action: " + entry.getAction());
 				switch (entry.getAction()) {
 				case DELETE:
 					if (entry.getExistingLibrary() == null) {
 						break;
 					}
-					FlowerinoPlugin.libraryInstallerWrapper.remove(entry.getExistingLibrary());
+					FlowerPlatformPlugin.libraryInstallerWrapper.remove(entry.getExistingLibrary());
 					break;
 				case DOWNLOAD:
 					RequiredLibraryWrapper requiredLibrary = new RequiredLibraryWrapper(entry.getRequiredLibrary());
-					FlowerinoPlugin.libraryInstallerWrapper.install(requiredLibrary, entry.getExistingLibrary());
+					FlowerPlatformPlugin.libraryInstallerWrapper.install(requiredLibrary, entry.getExistingLibrary());
 					break;
 				}
 			}
 		} catch (Exception e) {
-			FlowerinoPlugin.log("Error while applying actions", e);
+			FlowerPlatformPlugin.log("Error while applying actions", e);
 		}
 	}
 	

@@ -1,8 +1,8 @@
 package org.flowerplatform.flowerino_plugin.command;
 
-import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
+import static org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin.log;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.util.RunnableWithListener;
 import org.flowerplatform.flowerino_plugin.util.StartEndListener;
 import org.flowerplatform.flowerino_plugin.util.Util;
@@ -23,7 +23,7 @@ public class UploadToBoardCommand implements IHttpCommand {
 	
 	@Override
 	public Object run() throws HttpCommandException {
-		Editor editor = FlowerinoPlugin.getInstance().getEditor();
+		Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 		
 		Runnable originalExportHandler = null;
 		UploadHandler uploadHandler = null;

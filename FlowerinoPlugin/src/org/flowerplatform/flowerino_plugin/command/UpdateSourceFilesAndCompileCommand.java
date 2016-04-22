@@ -1,6 +1,6 @@
 package org.flowerplatform.flowerino_plugin.command;
 
-import static org.flowerplatform.flowerino_plugin.FlowerinoPlugin.log;
+import static org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.SourceFileDto;
 import org.flowerplatform.flowerino_plugin.util.RunnableWithListener;
 import org.flowerplatform.flowerino_plugin.util.StartEndListener;
@@ -59,7 +59,7 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 		for (SourceFileDto srcFile : this) {
 			if (srcFile.getName().endsWith("." + STANDARD_EXTENSION)) {
 				// The *.ino file needs to have the same name as the folder it is found in.
-				srcFile.setName(FlowerinoPlugin.FLOWER_PLATFORM_WORK_FOLDER_NAME + "." + STANDARD_EXTENSION);
+				srcFile.setName(FlowerPlatformPlugin.FLOWER_PLATFORM_WORK_FOLDER_NAME + "." + STANDARD_EXTENSION);
 			}
 			File f = new File(dir.getAbsolutePath() + File.separator + srcFile.getName());
 			try {
@@ -71,12 +71,12 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 		}
 		
 		// reload project
-		Editor editor = FlowerinoPlugin.getInstance().getEditor();
+		Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 	    editor.internalCloseRunner();
 		try {
 			Method handleOpenInternal = Editor.class.getDeclaredMethod("handleOpenInternal", File.class);
 			handleOpenInternal.setAccessible(true);
-		    handleOpenInternal.invoke(editor, new File(dir.getAbsolutePath() + File.separator + FlowerinoPlugin.FLOWER_PLATFORM_WORK_FOLDER_NAME + ".ino"));
+		    handleOpenInternal.invoke(editor, new File(dir.getAbsolutePath() + File.separator + FlowerPlatformPlugin.FLOWER_PLATFORM_WORK_FOLDER_NAME + ".ino"));
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
 			throw new ReflectionException("Reflection error.", e1);
 		}
@@ -87,7 +87,7 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 	 * Invokes the editor's compile function.
 	 */
 	private void invokeCompile(final CompilationListener compilationListener) throws HttpCommandException {
-		final Editor editor = FlowerinoPlugin.getInstance().getEditor();
+		final Editor editor = FlowerPlatformPlugin.getInstance().getEditor();
 		
 		StartEndListener compilationEndListener = new StartEndListener() {
 			@Override
@@ -126,7 +126,7 @@ public class UpdateSourceFilesAndCompileCommand extends ArrayList<SourceFileDto>
 	
 	@Override
 	public Object run() throws HttpCommandException {
-		File dir = FlowerinoPlugin.getFlowerPlatformWorkFolder();
+		File dir = FlowerPlatformPlugin.getFlowerPlatformWorkFolder();
 		
 		// Make sure the working folder is clean (i.e. no unnecessary files)
 		deleteFilesFromFolder(dir);
