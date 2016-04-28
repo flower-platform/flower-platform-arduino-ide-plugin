@@ -9,8 +9,8 @@ import com.googlecode.junittoolbox.SuiteClasses;
 import com.googlecode.junittoolbox.WildcardPatternSuite;
 
 @RunWith(WildcardPatternSuite.class)
-@SuiteClasses({"**/*.class", "!*TestSuiteLauncher.class"})
-public class ArduinoIde_v168_TestSuiteLauncher {
+@SuiteClasses({"**/*.class", "!*TestSuiteArduinoIde.class"})
+public class TestSuiteArduinoIde {
 	@BeforeClass 
 	public static void launchArduinoIde() {
 		System.out.println("Starting Arduino ide.");
