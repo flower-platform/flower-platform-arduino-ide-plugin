@@ -3,6 +3,9 @@ package org.flowerplatform.flowerino_plugin.library_manager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -152,6 +155,25 @@ public class LibraryManager extends JDialog {
 		model.getEntries().clear();
 		
 		List<Map<String, Object>> dependentLibraries = flowerinoDesktopAgent.callService("arduinoService/getDependentLibraryDescriptors?resourceNodeUri=" + resourceNodeUri, false);
+		
+		dependentLibraries = new ArrayList<>();
+		Map<String, Object> lib1;
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("Input.h", "Output.h"));
+		lib1.put("name", "Ard RT");
+		dependentLibraries.add(lib1);
+
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("DHT_U.h"));
+		lib1.put("name", "DHT");
+//		lib1.put("minVersion", "1.1.0");
+		dependentLibraries.add(lib1);
+
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("FlowerOTA.h"));
+		lib1.put("name", "FlowerOTA");
+		lib1.put("minVersion", "1.0.0");
+		dependentLibraries.add(lib1);
 		
 		// index all the required libs by header file
 		Map<String, Map<String, Object>> lookup = new HashMap<>();

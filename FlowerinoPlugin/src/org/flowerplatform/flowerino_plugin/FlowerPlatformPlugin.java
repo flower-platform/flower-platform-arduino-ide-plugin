@@ -270,7 +270,7 @@ public class FlowerPlatformPlugin implements Tool {
 				associateMenu.addActionListener(evt -> editLinkedRepository(false));
 				
 			    JMenuItem downloadLibs = new JMenuItem("Download Required Libs");
-//				menu.add(downloadLibs);
+				menu.add(downloadLibs);
 				downloadLibs.addActionListener(downloadLibsActionListener);
 //				menu.addSeparator();
 
