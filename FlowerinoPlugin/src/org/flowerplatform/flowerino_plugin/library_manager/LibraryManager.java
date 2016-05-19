@@ -3,6 +3,9 @@ package org.flowerplatform.flowerino_plugin.library_manager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +28,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableColumn;
 
-import org.flowerplatform.flowerino_plugin.FlowerinoPlugin;
+import org.flowerplatform.flowerino_plugin.FlowerPlatformPlugin;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManagerEntry.Action;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManagerEntry.Status;
 import org.flowerplatform.flowerino_plugin.library_manager.renderer.ActionCellRenderer;
@@ -56,14 +59,14 @@ public class LibraryManager extends JDialog {
 
 	private JScrollPane textPaneScrollPane;
 	
-	private FlowerinoPlugin flowerinoDesktopAgent;
+	private FlowerPlatformPlugin flowerinoDesktopAgent;
 	
 	private String resourceNodeUri;
 
 	/**
 	 * Create the frame.
 	 */
-	public LibraryManager(FlowerinoPlugin flowerinoDesktopAgent, String resourceNodeUri) {
+	public LibraryManager(FlowerPlatformPlugin flowerinoDesktopAgent, String resourceNodeUri) {
 		super(flowerinoDesktopAgent.getEditor(), true);
 		this.flowerinoDesktopAgent = flowerinoDesktopAgent;
 		this.resourceNodeUri = resourceNodeUri;
@@ -153,6 +156,25 @@ public class LibraryManager extends JDialog {
 		
 		List<Map<String, Object>> dependentLibraries = flowerinoDesktopAgent.callService("arduinoService/getDependentLibraryDescriptors?resourceNodeUri=" + resourceNodeUri, false);
 		
+		dependentLibraries = new ArrayList<>();
+		Map<String, Object> lib1;
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("Input.h", "Output.h"));
+		lib1.put("name", "Ard RT");
+		dependentLibraries.add(lib1);
+
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("DHT_U.h"));
+		lib1.put("name", "DHT");
+//		lib1.put("minVersion", "1.1.0");
+		dependentLibraries.add(lib1);
+
+		lib1 = new HashMap<>();
+		lib1.put("headerFiles", Arrays.asList("FlowerOTA.h"));
+		lib1.put("name", "FlowerOTA");
+		lib1.put("minVersion", "1.0.0");
+		dependentLibraries.add(lib1);
+		
 		// index all the required libs by header file
 		Map<String, Map<String, Object>> lookup = new HashMap<>();
 		for (Map<String, Object> lib : dependentLibraries) {
@@ -167,7 +189,7 @@ public class LibraryManager extends JDialog {
 			try {
 				entry.setExistingHeaderFiles(Base.headerListFromIncludePath(lib.getSrcFolder()));
 			} catch (IOException e) {
-				FlowerinoPlugin.log("Cannot get header files for dir = " + lib.getSrcFolder(), e);
+				FlowerPlatformPlugin.log("Cannot get header files for dir = " + lib.getSrcFolder(), e);
 				continue;
 			}
 			
@@ -302,22 +324,22 @@ public class LibraryManager extends JDialog {
 		
 		try {
 			for (LibraryManagerEntry entry : model.getEntries()) {
-				FlowerinoPlugin.log("For required library: " + entry.getName() + ", applying action: " + entry.getAction());
+				FlowerPlatformPlugin.log("For required library: " + entry.getName() + ", applying action: " + entry.getAction());
 				switch (entry.getAction()) {
 				case DELETE:
 					if (entry.getExistingLibrary() == null) {
 						break;
 					}
-					FlowerinoPlugin.libraryInstallerWrapper.remove(entry.getExistingLibrary());
+					FlowerPlatformPlugin.libraryInstallerWrapper.remove(entry.getExistingLibrary());
 					break;
 				case DOWNLOAD:
 					RequiredLibraryWrapper requiredLibrary = new RequiredLibraryWrapper(entry.getRequiredLibrary());
-					FlowerinoPlugin.libraryInstallerWrapper.install(requiredLibrary, entry.getExistingLibrary());
+					FlowerPlatformPlugin.libraryInstallerWrapper.install(requiredLibrary, entry.getExistingLibrary());
 					break;
 				}
 			}
 		} catch (Exception e) {
-			FlowerinoPlugin.log("Error while applying actions", e);
+			FlowerPlatformPlugin.log("Error while applying actions", e);
 		}
 	}
 	

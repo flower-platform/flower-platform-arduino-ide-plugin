@@ -19,7 +19,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,28 +35,44 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.flowerplatform.flowerino.otaupload.OtaUploadDialog;
+import org.flowerplatform.flowerino_plugin.command.GetBoardsCommand;
+import org.flowerplatform.flowerino_plugin.command.HeartbeatCommand;
+import org.flowerplatform.flowerino_plugin.command.SelectBoardCommand;
+import org.flowerplatform.flowerino_plugin.command.SetOptionsCommand;
+import org.flowerplatform.flowerino_plugin.command.UpdateSourceFilesAndCompileCommand;
+import org.flowerplatform.flowerino_plugin.command.UploadToBoardCommand;
 import org.flowerplatform.flowerino_plugin.library_manager.LibraryManager;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.AbstractLibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapper;
 import org.flowerplatform.flowerino_plugin.library_manager.compatibility.LibraryInstallerWrapperPre166;
-
-import processing.app.BaseNoGui;
-import processing.app.Editor;
-import processing.app.Sketch;
-import processing.app.tools.Tool;
-import cc.arduino.contributions.VersionHelper;
+import org.flowerplatform.tiny_http_server.FlexRequestHandler;
+import org.flowerplatform.tiny_http_server.HttpServer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.zafarkhaja.semver.Version;
 
+import cc.arduino.contributions.VersionHelper;
+import processing.app.BaseNoGui;
+import processing.app.Editor;
+import processing.app.Sketch;
+import processing.app.SketchData;
+import processing.app.tools.Tool;
+
 /**
  * @author Cristian Spiescu
  */
-public class FlowerinoPlugin implements Tool {
+public class FlowerPlatformPlugin implements Tool {
 
 	public static final String RE_GENERATE_FROM_FLOWERINO_REPOSITORY = "(Re)generate from Flowerino Repository";
 
-	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+	/**
+	 * The name of the folder in which we store temp data related to work happening within flower platform.
+	 * Please note this name is not absolute, but relative (i.e. just the folder name, not the full path)
+	 */
+	public static final String FLOWER_PLATFORM_WORK_FOLDER_NAME = "flower-platform-work";
+
+	protected ActionListener generateActionListener = new ResourceNodeRequiredActionListener(FlowerPlatformPlugin.this) {
 		@Override
 		protected void runAfterValidation() {
 			if (!libraryVersionCheckedOnce.contains(resourceNodeUri)) {
@@ -101,7 +119,7 @@ public class FlowerinoPlugin implements Tool {
 		}
 	};
 	
-	protected ActionListener downloadLibsActionListener = new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+	protected ActionListener downloadLibsActionListener = new ResourceNodeRequiredActionListener(FlowerPlatformPlugin.this) {
 		@Override
 		protected void runAfterValidation() {
 			showLibraryManager(resourceNodeUri, false);
@@ -109,7 +127,7 @@ public class FlowerinoPlugin implements Tool {
 	};
 	
 	protected void showLibraryManager(String resourceNodeUri, boolean showDialogOnlyIfUpdateNeeded) {
-		LibraryManager lm = new LibraryManager(FlowerinoPlugin.this, resourceNodeUri);
+		LibraryManager lm = new LibraryManager(FlowerPlatformPlugin.this, resourceNodeUri);
 		boolean updateNeeded = lm.refreshTable();
 		
 		if (showDialogOnlyIfUpdateNeeded && !updateNeeded) {
@@ -125,13 +143,20 @@ public class FlowerinoPlugin implements Tool {
 	}
 
 	public static AbstractLibraryInstallerWrapper libraryInstallerWrapper;
-	
+
+	private static FlowerPlatformPlugin INSTANCE;
+
 	protected Editor editor;
 	protected String serverUrl;
 	protected final static String SERVICE_PREFIX = "/ws-dispatcher";
 	protected Set<String> libraryVersionCheckedOnce = new HashSet<>();
 	protected String version;
+	protected Properties globalProperties; 
 	
+	public Properties getGlobalProperties() {
+		return globalProperties;
+	}
+
 	public Editor getEditor() {
 		return editor;
 	}
@@ -141,7 +166,11 @@ public class FlowerinoPlugin implements Tool {
 	}
 
 	@Override
-	public void init(Editor editor) {		
+	public void init(Editor editor) {
+		// getInstance() always returns first instance created
+		if (INSTANCE == null) {
+			INSTANCE = this;
+		}
 		// read version from file; we put it in the file to reuse it easily from ANT, when building the .jar file
 		try {
 			BufferedReader r = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("flowerino-plugin-version.txt")));
@@ -152,18 +181,56 @@ public class FlowerinoPlugin implements Tool {
 		}
 		
 		// get/create global properties
-		Properties globalProperties = readProperties(getGlobalPropertiesFile());
-		if (globalProperties.isEmpty()) {
+		globalProperties = readProperties(getGlobalPropertiesFile());
+		boolean writeProperties = false;
+		if (globalProperties.getProperty("serverUrl") == null) {
 			globalProperties.put("serverUrl", "http://hub.flower-platform.com");
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("commandServerPort") == null) {
+			globalProperties.put("commandServerPort", "9000");
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("otaUpload.serverSignature") == null) {
+			try {
+				globalProperties.put("otaUpload.serverSignature", new String(Base64.getEncoder().encode(SecureRandom.getInstanceStrong().generateSeed(32))));
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			writeProperties = true;
+		}
+		if (globalProperties.getProperty("otaUpload.method") == null) {
+			globalProperties.put("otaUpload.method", "0");
+			writeProperties = true;
+		}
+		if (writeProperties) {
 			writeProperties(globalProperties, getGlobalPropertiesFile());
 		}
 		serverUrl = globalProperties.getProperty("serverUrl");
+		
+		try {
+			int serverPort = Integer.parseInt(globalProperties.getProperty("commandServerPort"));
+			HttpServer server = new HttpServer(serverPort);
+			// Set special handler which reports errors as (200 OK) messages, with code and message.
+			server.setRequestHandler(new FlexRequestHandler());
+			
+			//server.registerCommand("updateSourceFiles", UpdateSourceFilesCommand.class);
+// TODO CS/REVIEW: ce e cu codul asta gunoi? mai avem/nu mai avem nevoie?
+			server.registerCommand("uploadToBoard", UploadToBoardCommand.class);
+			server.registerCommand("compile", UpdateSourceFilesAndCompileCommand.class);
+			server.registerCommand("getBoards", GetBoardsCommand.class);
+			server.registerCommand("selectBoard", SelectBoardCommand.class);
+			server.registerCommand("setOptions", SetOptionsCommand.class);
+			server.registerCommand("heartbeat", HeartbeatCommand.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		this.editor = editor;
 		editor.addComponentListener(new ComponentListener() {
 			@Override
 			public void componentShown(ComponentEvent e) {
-				log("Flowerino Plugin v" + version + " is loading. Using server URL: " + serverUrl);
+				log("Flower Platform Plugin v" + version + " is loading. Using server URL: " + serverUrl);
 				initLegacySupport();
 				new Thread(new Runnable() {
 					@Override
@@ -187,35 +254,40 @@ public class FlowerinoPlugin implements Tool {
 				}).start();
 				
 				// initialize the menu
-				JMenu menu = new JMenu("Flowerino");
-			    JMenuItem generateMenu = new JMenuItem(RE_GENERATE_FROM_FLOWERINO_REPOSITORY);
-				menu.add(generateMenu);
-				generateMenu.addActionListener(generateActionListener);
+				JMenu menu = new JMenu("Flower Platform");
+				
+				// add Zero OTA Upload menu item
+				menu.add(new JMenuItem("Upload OTA - MKR1000 / Zero")).addActionListener(e1 -> zeroOtaUpload());
 				menu.addSeparator();
 				
+			    JMenuItem generateMenu = new JMenuItem(RE_GENERATE_FROM_FLOWERINO_REPOSITORY);
+//				menu.add(generateMenu);
+				generateMenu.addActionListener(generateActionListener);
+//				menu.addSeparator();
+				
 			    JMenuItem associateMenu = new JMenuItem("Add/Edit Link to Flowerino Repository");
-				menu.add(associateMenu);
+//				menu.add(associateMenu);
 				associateMenu.addActionListener(evt -> editLinkedRepository(false));
 				
 			    JMenuItem downloadLibs = new JMenuItem("Download Required Libs");
 				menu.add(downloadLibs);
 				downloadLibs.addActionListener(downloadLibsActionListener);
-				menu.addSeparator();
+//				menu.addSeparator();
 
-				menu.add(new JMenuItem("Go to Diagrams: Flowerino > Linked Repository (external web browser)")).addActionListener(new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
-					@Override
-					protected void runAfterValidation() {
-						try {
-							String[] spl = fullRepository.split("/");
-							navigateUrl(serverUrl + "/#/repositories/page/" + spl[0] + URLEncoder.encode("|", "UTF-8") + spl[1] + "/diagram-editor");
-						} catch (IOException e1) {
-							log("Cannot open url: " + serverUrl, e1);
-						}
-					}
-				});
+//				menu.add(new JMenuItem("Go to Diagrams: Flowerino > Linked Repository (external web browser)")).addActionListener(new ResourceNodeRequiredActionListener(FlowerinoPlugin.this) {
+//					@Override
+//					protected void runAfterValidation() {
+//						try {
+//							String[] spl = fullRepository.split("/");
+//							navigateUrl(serverUrl + "/#/repositories/page/" + spl[0] + URLEncoder.encode("|", "UTF-8") + spl[1] + "/diagram-editor");
+//						} catch (IOException e1) {
+//							log("Cannot open url: " + serverUrl, e1);
+//						}
+//					}
+//				});
 				
-				menu.add(new JMenuItem("Go to Flowerino > Browse Repositories (external web browser)")).addActionListener(e1 -> navigateUrl(serverUrl));
-				menu.add(new JMenuItem("Go to Flowerino Web Site (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com/flowerino"));
+//				menu.add(new JMenuItem("Go to Flowerino > Browse Repositories (external web browser)")).addActionListener(e1 -> navigateUrl(serverUrl));
+				menu.add(new JMenuItem("Go to Flower Platform (external web browser)")).addActionListener(e1 -> navigateUrl("http://flower-platform.com"));
 				
 				editor.getJMenuBar().add(menu, editor.getJMenuBar().getComponentCount() - 1);
 				editor.getJMenuBar().revalidate();
@@ -258,6 +330,16 @@ public class FlowerinoPlugin implements Tool {
 		} catch (IOException | URISyntaxException e1) {
 			log("Cannot open url: " + serverUrl);
 		}		
+	}
+	
+	/**
+	 * @author Claudiu Matei
+	 */
+	public void zeroOtaUpload() {
+		OtaUploadDialog dialog = new OtaUploadDialog();
+		Integer method = Integer.parseInt(globalProperties.getProperty("otaUpload.method"));
+		dialog.setMethod(method);
+		dialog.setVisible(true);
 	}
 	
 	@Override
@@ -305,7 +387,7 @@ public class FlowerinoPlugin implements Tool {
 	}
 	
 	public File getGlobalPropertiesFile() {
-		return new File(BaseNoGui.getSketchbookFolder(), ".flowerino");
+		return new File(BaseNoGui.getSketchbookFolder(), ".flower-platform");
 	}
 
 	public Properties readProperties(File file) {
@@ -347,6 +429,10 @@ public class FlowerinoPlugin implements Tool {
 		log("Config info successfully saved in " + file.getAbsolutePath());
 	}
 	
+	public void writeGlobalProperties() {
+		writeProperties(globalProperties, getGlobalPropertiesFile());
+	}
+	
 	public String getResourceNodeUri(String fullRepository) {
 		if (fullRepository == null || fullRepository.isEmpty()) {
 			return null;
@@ -371,5 +457,31 @@ public class FlowerinoPlugin implements Tool {
 		writeProperties(properties, getProjectPropertiesFile());
 		return result;
 	}
+
+	public static File getBuildFolder(Sketch sketch) throws IOException {
+		SketchData sketchData = null;
+		try {
+			Field f;
+			f = sketch.getClass().getDeclaredField("data");
+			f.setAccessible(true);
+			sketchData = (SketchData) f.get(sketch); 
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			e.printStackTrace();
+		} 
+		return BaseNoGui.getBuildFolder(sketchData);
+	}
+
+	public static File getFlowerPlatformWorkFolder() {
+		File f = new File("C:\\" + FLOWER_PLATFORM_WORK_FOLDER_NAME);
+//		File f = new File("F:\\flower-platform-work");
+// TODO CS/REVIEW: despre ce e vorba cu aceasta hardcodare?
+		f.mkdirs();
+		return f;
+	}
+	
+	public static FlowerPlatformPlugin getInstance() {
+		return INSTANCE;
+	}
 	
 }
+ 
